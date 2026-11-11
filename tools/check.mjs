@@ -137,7 +137,7 @@ export async function browserCheck(n) {
         if (button.width > 0 || button.height > 0) note("iteration 0 must not show the previous button");
       } else {
         if (!button.parentIsBody) note("<prev-iteration> must be a direct child of <body>");
-        if (button.width < 44 || button.height < 44) note("the previous button is not visible at full size");
+        if (button.width < 24 || button.height < 24) note("the previous button is not visible at full size");
         if (Math.abs(button.left - 12) > 1 || Math.abs(button.bottom - 12) > 1) {
           note(`the previous button is not in its corner (left ${button.left}px, bottom ${button.bottom}px; expected 12px each)`);
         }

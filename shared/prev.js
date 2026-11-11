@@ -23,25 +23,32 @@ sheet.replaceSync(`
     pointer-events: auto !important;
   }
   a {
+    position: relative;
     display: block;
     box-sizing: border-box;
-    min-width: 44px;
-    height: 44px;
-    padding: 0 14px;
-    font: 13px/42px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    letter-spacing: 0.02em;
-    text-align: center;
-    text-decoration: none;
-    white-space: nowrap;
+    width: 24px;
+    height: 24px;
     color: #fff;
     background: #000;
     border: 1px solid #fff;
-    border-radius: 22px;
     box-shadow: 0 0 0 1px #000;
     cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
+  }
+  /* The square is 24px, but a finger gets 44px to aim at. */
+  a::before {
+    content: "";
+    position: absolute;
+    inset: -11px;
+  }
+  svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: square;
   }
   a:hover {
     color: #000;
@@ -69,7 +76,7 @@ class PrevIteration extends HTMLElement {
     const prev = n - 1;
     const link = document.createElement("a");
     link.href = `/${prev}/`;
-    link.textContent = `← ${prev}`;
+    link.innerHTML = '<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M16 11H6M10 7l-4 4 4 4"/></svg>';
     link.setAttribute("aria-label", `Previous iteration, number ${prev}`);
 
     const root = this.attachShadow({ mode: "closed" });
