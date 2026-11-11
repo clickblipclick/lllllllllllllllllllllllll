@@ -69,7 +69,23 @@ const staticOnly = process.argv.includes("--static-only");
 const journal = readJournal();
 const n = journal.length - 1;
 
-const problems = [...untouchedPast(n), ...(await check(n, { staticOnly }))];
+// The piece's title is its page <title>; the journal must record the same one.
+function titleMismatch(n, title) {
+  const html = fs.readFileSync(path.join(ROOT, String(n), "index.html"), "utf8");
+  const entities = { amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'", apos: "'" };
+  const pageTitle = (html.match(/<title>([^<]*)<\/title>/i)?.[1] ?? "")
+    .replace(/&(amp|lt|gt|quot|#39|apos);/g, (_, e) => entities[e])
+    .trim();
+  return pageTitle === title.trim()
+    ? []
+    : [`the journal title ("${title}") must match the page <title> ("${pageTitle}")`];
+}
+
+const problems = [
+  ...untouchedPast(n),
+  ...titleMismatch(n, journal[n].title),
+  ...(await check(n, { staticOnly })),
+];
 if (problems.length) fail(problems);
 
 for (const f of FILES) fs.copyFileSync(path.join(ROOT, String(n), f), path.join(ROOT, f));

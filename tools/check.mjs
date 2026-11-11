@@ -109,9 +109,12 @@ export async function browserCheck(n) {
 
   let browser;
   try {
-    browser = await chromium.launch();
+    // Use an already-installed Chrome when CHROME_PATH names one; otherwise
+    // the browser downloaded by `npx playwright install chromium`.
+    const executablePath = process.env.CHROME_PATH || undefined;
+    browser = await chromium.launch({ executablePath });
   } catch (e) {
-    return [`browser check could not run: ${e.message.split("\n")[0]} (run \`npx playwright install chromium\`)`];
+    return [`browser check could not run: ${e.message.split("\n")[0]} (run \`npx playwright install chromium\`, or set CHROME_PATH to an installed Chrome)`];
   }
 
   const problems = [];

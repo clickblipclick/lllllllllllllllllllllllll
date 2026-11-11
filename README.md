@@ -85,6 +85,8 @@ an old one, and so a theme that is forming can be noticed and continued.
 }
 ```
 
+- `title` is the piece's title, and must be identical to the page's
+  `<title>`.
 - `kind` is `"interactive"` or `"still"`.
 - `thread` is `null`, or a short name for a theme this piece deliberately
   continues or starts. Reuse the exact name used by earlier entries.
@@ -114,7 +116,9 @@ npm install
 npx playwright install chromium
 ```
 
-The browser part of the check needs both. Without them, the scripts accept
+The browser part of the check needs both. If the `CHROME_PATH` environment
+variable names an installed Chrome, that browser is used and the second
+command can be skipped. Without a browser, the scripts accept
 `--static-only`, which runs every check that does not need a browser.
 
 To look at the site locally, serve this folder from its root with any static
