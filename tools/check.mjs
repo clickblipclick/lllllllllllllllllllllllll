@@ -6,17 +6,10 @@
 // Exits 0 if the iteration passes, 1 otherwise.
 
 import fs from "node:fs";
-import http from "node:http";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { ROOT, FILES, CSP } from "./rules.mjs";
-
-const MIME = {
-  ".html": "text/html; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".js": "text/javascript; charset=utf-8",
-  ".json": "application/json; charset=utf-8",
-};
+import { serve } from "./serve.mjs";
 
 const count = (text, re) => (text.match(re) || []).length;
 
@@ -82,21 +75,6 @@ export function staticCheck(n) {
   }
 
   return problems;
-}
-
-function serve() {
-  const server = http.createServer((req, res) => {
-    let p = decodeURIComponent(new URL(req.url, "http://x").pathname);
-    if (p.endsWith("/")) p += "index.html";
-    const file = path.join(ROOT, p);
-    if (!file.startsWith(ROOT + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
-      res.writeHead(404).end("not found");
-      return;
-    }
-    res.writeHead(200, { "content-type": MIME[path.extname(file)] || "application/octet-stream" });
-    fs.createReadStream(file).pipe(res);
-  });
-  return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve(server)));
 }
 
 export async function browserCheck(n) {

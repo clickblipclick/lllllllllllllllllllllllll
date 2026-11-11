@@ -125,6 +125,15 @@ variable names an installed Chrome, that browser is used and the second
 command can be skipped. Without a browser, the scripts accept
 `--static-only`, which runs every check that does not need a browser.
 
-To look at the site locally, serve this folder from its root with any static
-file server (the pages use `/shared/prev.js` and `/N/` as root-relative
-addresses, so opening the files directly will not work).
+## Working locally
+
+`npm start` serves the site at http://localhost:8000/ the way it is served
+live (`npm start -- 8001` for another port). Opening the files directly will
+not work, because pages use `/shared/prev.js` and `/N/` as root-relative
+addresses.
+
+`npm run try` tries a prompt without touching the real site. It makes a
+throwaway copy of the last commit, runs the prompt there with the `claude`
+command-line tool, skips the commit and push, and serves the result. The
+prompt is read from `drafts/prompt.md`, or from a file you name:
+`npm run try -- drafts/other.md`. The `drafts/` folder is not committed.
