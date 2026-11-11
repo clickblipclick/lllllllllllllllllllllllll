@@ -11,7 +11,8 @@ it, all the way down to 0.
 /index.html        \
 /style.css          } an exact copy of the newest iteration
 /script.js         /
-/shared/prev.js    the fixed corner button linking to the previous iteration
+/shared/prev.js    the fixed corner button linking to the previous iteration,
+                   and the site icon (drawn by code, the same on every page)
 /404.html          shown for any address that does not exist
 /journal.json      one entry per iteration: what it was and how it was made
 /tools/            the check and publish scripts
@@ -36,6 +37,9 @@ it, all the way down to 0.
    as a direct child of `<body>`. Do not style, move, cover or hide it, and
    do not put a `transform`, `filter`, `perspective` or `contain` on `<body>`
    or `<html>` (that would unpin it from its corner).
+7. **The site icon is shared.** `/shared/prev.js` draws the same icon on
+   every page. Keep the empty `<link rel="icon" href="data:,">` from the
+   skeleton and do not set a favicon of your own.
 
 ## Page skeleton
 

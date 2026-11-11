@@ -79,3 +79,57 @@ class PrevIteration extends HTMLElement {
 }
 
 customElements.define("prev-iteration", PrevIteration);
+
+// The site's icon, the same on every page: three white strokes on black.
+// It is offered twice so every browser finds one it can use: as an SVG, and
+// as a PNG drawn on a canvas for browsers that ignore SVG icons. Both are
+// data URLs, so there is no image file and no extra request. Pages keep the
+// empty placeholder <link rel="icon" href="data:,"> from the skeleton; this
+// fills it in.
+const ICON_SIZE = 64;
+const ICON_BARS = [12, 28, 44].map((x) => ({ x, y: 12, w: 8, h: 40 }));
+
+function iconPng() {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = ICON_SIZE;
+  const g = canvas.getContext("2d");
+  if (!g) return null;
+  g.fillStyle = "#000";
+  g.fillRect(0, 0, ICON_SIZE, ICON_SIZE);
+  g.fillStyle = "#fff";
+  for (const b of ICON_BARS) g.fillRect(b.x, b.y, b.w, b.h);
+  return canvas.toDataURL("image/png");
+}
+
+function iconSvg() {
+  const bars = ICON_BARS.map((b) => `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}"/>`).join("");
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${ICON_SIZE} ${ICON_SIZE}">` +
+    `<rect width="${ICON_SIZE}" height="${ICON_SIZE}"/><g fill="#fff">${bars}</g></svg>`;
+  return "data:image/svg+xml," + encodeURIComponent(svg);
+}
+
+function setIcon() {
+  for (const old of document.querySelectorAll('link[rel~="icon"]')) old.remove();
+
+  // The PNG comes first and declares its size; the SVG comes last. Browsers
+  // that understand SVG icons prefer it, and the rest fall back to the PNG.
+  const png = iconPng();
+  if (png) {
+    const link = document.createElement("link");
+    link.rel = "icon";
+    link.type = "image/png";
+    link.setAttribute("sizes", `${ICON_SIZE}x${ICON_SIZE}`);
+    link.href = png;
+    document.head.append(link);
+  }
+
+  const link = document.createElement("link");
+  link.rel = "icon";
+  link.type = "image/svg+xml";
+  link.setAttribute("sizes", "any");
+  link.href = iconSvg();
+  document.head.append(link);
+}
+
+setIcon();
