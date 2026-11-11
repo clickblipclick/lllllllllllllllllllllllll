@@ -1,1 +1,19 @@
-[]
+[
+  {
+    "n": 0,
+    "date": "2026-11-11",
+    "title": "Come back when you are taller",
+    "idea": "A height mark on a doorframe means nothing until there is a second one above it. The page is the edge of a doorframe with one pencil mark already on it, dated the day the site began; hold still against the paint and a mark is pencilled for you with today's date, and the frame keeps it, so the piece only finishes when you return. The room beyond the door is as light or dark as your own hour.",
+    "kind": "interactive",
+    "techniques": [
+      "canvas 2d",
+      "pointer events",
+      "press and hold",
+      "hand-drawn stroke digits",
+      "localStorage",
+      "time of day",
+      "web audio noise"
+    ],
+    "thread": "the doorframe"
+  }
+]

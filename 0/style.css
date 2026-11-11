@@ -1,0 +1,42 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #6b5644;
+}
+
+#door {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  outline: none;
+  cursor: crosshair;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#say {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  margin: 0;
+  padding: 0 76px;
+  text-align: center;
+  font: italic 15px/1.3 Georgia, "Times New Roman", serif;
+  letter-spacing: 0.01em;
+  color: #f1e9da;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+#say.on { opacity: 0.92; }
+
+@media (prefers-reduced-motion: reduce) {
+  #say { transition: none; }
+}
