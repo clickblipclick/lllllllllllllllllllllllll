@@ -8,6 +8,15 @@
 // so the result can be looked at. Nothing is committed or pushed, and this
 // folder is not changed. Press Ctrl-C when done; the copy is deleted.
 //
+// The trial runs on this computer, not in a sandbox, so it is fenced in:
+//   - the copy is a separate clone with no remote, so there is nowhere to push
+//   - the scripts it is allowed to run (tools/, node_modules/) and everything
+//     else a daily run must not touch are made read-only in the copy, and
+//     editing them is also denied by rule, so it cannot rewrite a script and
+//     then run it
+//   - the only commands it may run are the check and publish scripts, the
+//     date, and read-only git commands
+//
 // Environment variables:
 //   MODEL   model to use (default: claude-fable-5-2, the same as the nightly run)
 //   PORT    port to serve the result on (default: 8001)
@@ -17,6 +26,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync, spawn } from "node:child_process";
+import { pathToFileURL } from "node:url";
 import { ROOT } from "./rules.mjs";
 import { serve } from "./serve.mjs";
 
@@ -43,31 +53,40 @@ Then give the final report.`;
 
 const git = (args, cwd = ROOT) => execFileSync("git", args, { cwd, encoding: "utf8" }).trim();
 
-const copy = fs.mkdtempSync(path.join(os.tmpdir(), "site-trial-"));
-git(["worktree", "add", "--detach", copy, "HEAD"]);
-fs.symlinkSync(path.join(ROOT, "node_modules"), path.join(copy, "node_modules"));
+// Everything a daily run must leave alone. In the copy these are read-only.
+const PROTECTED = ["tools", "shared", "node_modules", "README.md", "404.html", "CNAME", "package.json", "package-lock.json", ".gitignore", ".nojekyll"];
 
-// Keep that link out of git's sight in the copy, so the publish script's
-// "nothing else changed" guard is not tripped by it.
-const exclude = path.resolve(ROOT, git(["rev-parse", "--git-path", "info/exclude"]));
-const excluded = fs.existsSync(exclude) ? fs.readFileSync(exclude, "utf8") : "";
-if (!/^node_modules$/m.test(excluded)) {
-  fs.mkdirSync(path.dirname(exclude), { recursive: true });
-  fs.appendFileSync(exclude, (excluded.endsWith("\n") || !excluded ? "" : "\n") + "node_modules\n");
-}
+const copy = fs.mkdtempSync(path.join(os.tmpdir(), "site-trial-"));
+execFileSync("git", ["clone", "--quiet", "--no-local", "--depth", "1", pathToFileURL(ROOT).href, copy]);
+git(["remote", "remove", "origin"], copy);
+
+// Its own copy of the dependencies (not a link back to the real ones), kept
+// out of git's sight so the publish script's "nothing else changed" guard is
+// not tripped by it.
+fs.cpSync(path.join(ROOT, "node_modules"), path.join(copy, "node_modules"), { recursive: true, verbatimSymlinks: true });
+fs.appendFileSync(path.join(copy, ".git", "info", "exclude"), "\nnode_modules\n");
+
+const lock = (mode) => {
+  for (const name of PROTECTED) {
+    const target = path.join(copy, name);
+    if (fs.existsSync(target)) execFileSync("chmod", ["-R", mode, target]);
+  }
+};
+lock("a-w");
 
 let cleaned = false;
 function cleanUp() {
   if (cleaned) return;
   cleaned = true;
   if (process.env.KEEP) {
-    console.log(`\nKept the trial copy at ${copy}\nRemove it later with: git worktree remove --force "${copy}"`);
+    console.log(`\nKept the trial copy at ${copy}`);
     return;
   }
   try {
-    git(["worktree", "remove", "--force", copy]);
+    lock("u+w");
+    fs.rmSync(copy, { recursive: true, force: true });
   } catch {
-    console.error(`Could not remove ${copy}; remove it with: git worktree remove --force "${copy}"`);
+    console.error(`Could not remove ${copy}; delete that folder by hand.`);
   }
 }
 process.on("exit", cleanUp);
@@ -81,10 +100,15 @@ console.log("This usually takes several minutes. Nothing here or on the live sit
 const allowed = [
   "Read", "Write", "Edit", "Glob", "Grep",
   "Bash(node tools/publish.mjs:*)", "Bash(node tools/check.mjs:*)",
-  "Bash(ls:*)", "Bash(cat:*)", "Bash(mkdir:*)", "Bash(date:*)", "Bash(TZ=America/Chicago date:*)",
+  "Bash(date:*)", "Bash(TZ=America/Chicago date:*)",
   "Bash(git status:*)", "Bash(git log:*)", "Bash(git diff:*)",
 ];
-const blocked = ["Bash(git push:*)", "Bash(git commit:*)", "Bash(npm install:*)"];
+const blocked = [
+  "Bash(git push:*)", "Bash(git commit:*)", "Bash(git remote:*)", "Bash(npm:*)", "Bash(npx:*)",
+  "WebFetch", "WebSearch",
+  ...PROTECTED.map((name) => `Edit(${["tools", "shared", "node_modules"].includes(name) ? name + "/**" : name})`),
+  "Edit(.git/**)",
+];
 
 const child = spawn(
   "claude",
