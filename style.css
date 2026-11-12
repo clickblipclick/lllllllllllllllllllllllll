@@ -1,42 +1,90 @@
 html, body {
   margin: 0;
-  height: 100%;
-  overflow: hidden;
-  background: #6b5644;
+  background: #ece6d6;
 }
 
-#door {
-  position: fixed;
+/* the length of the scroll is the thickness of the paint */
+#depth { height: 900vh; height: 900lvh; }
+
+#jamb { position: fixed; inset: 0; overflow: hidden; }
+
+#jamb div {
+  position: absolute;
+  inset: 0;
+}
+
+
+/* every coat was brushed top to bottom */
+.coat {
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.07) 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.035) 0 1px, transparent 1px 14px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 2px, transparent 2px 23px);
+}
+
+.wood {
+  background-color: #c9a474;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(110,70,30,0.22) 0 1px, transparent 1px 11px),
+    repeating-linear-gradient(90deg, rgba(110,70,30,0.13) 0 2px, transparent 2px 29px),
+    repeating-linear-gradient(90deg, rgba(255,235,200,0.14) 0 3px, transparent 3px 17px),
+    repeating-linear-gradient(90deg, rgba(90,55,25,0.10) 0 6px, transparent 6px 67px),
+    linear-gradient(90deg, rgba(120,80,40,0.10), rgba(255,240,210,0.10) 45%, rgba(120,80,40,0.14));
+}
+
+#jamb svg {
+  position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  display: block;
-  touch-action: none;
-  outline: none;
-  cursor: crosshair;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-  -webkit-user-select: none;
+  overflow: visible;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-#say {
+/* a paint-chart chip, the only label in the room */
+#chip {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: max(14px, env(safe-area-inset-bottom));
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
   margin: 0;
-  padding: 0 76px;
-  text-align: center;
-  font: italic 15px/1.3 Georgia, "Times New Roman", serif;
-  letter-spacing: 0.01em;
-  color: #f1e9da;
+  padding: 5px 9px 5px 5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 84px);
+  box-sizing: border-box;
+  background: #fbfaf6;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.16);
+  font: 11px/1.25 "Helvetica Neue", Helvetica, Arial, sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #2b2a27;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 1.2s ease;
 }
 
-#say.on { opacity: 0.92; }
+#swatch {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.14);
+}
 
-@media (prefers-reduced-motion: reduce) {
-  #say { transition: none; }
+#note {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  color: #6f6c64;
+}
+
+#note:empty { display: none; }
+
+#told {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

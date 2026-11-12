@@ -15,5 +15,21 @@
       "web audio noise"
     ],
     "thread": "the doorframe"
+  },
+  {
+    "n": 1,
+    "date": "2026-11-12",
+    "title": "Under the paint",
+    "idea": "Nobody rubs out a height mark; they paint over it, so every one ever made is still on the frame, sealed between two coats. The page is the jamb from 0 seen close, and scrolling sands it back through ninety-five years of colours in widening rings, each coat giving up the initials and dates pencilled on it just before the same sanding takes them off. It ends at bare pine and the carpenter's figure for the door, and scrolling back up does not put anything back.",
+    "kind": "interactive",
+    "techniques": [
+      "scroll as abrasion",
+      "nested clip-path polygons",
+      "svg single-stroke lettering",
+      "irreversible progress",
+      "localStorage read from an earlier piece",
+      "css gradient wood grain"
+    ],
+    "thread": "the doorframe"
   }
 ]
