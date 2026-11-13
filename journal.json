@@ -31,5 +31,21 @@
       "css gradient wood grain"
     ],
     "thread": "the doorframe"
+  },
+  {
+    "n": 2,
+    "date": "2026-11-13",
+    "title": "A bit more",
+    "idea": "A door left ajar at bedtime is a measurement too: the exact width of what a child is afraid of, agreed again every night. The same doorframe as 0 and 1, seen in the dark from the bed; you hold the door and drag it, and a small voice says more, less, a tiny bit less, until it says there, and then someone walks off down the hall. The agreed width is different each date and slightly narrower than the last, and about five years after the first mark it is nothing and you are told you can shut it.",
+    "kind": "interactive",
+    "techniques": [
+      "canvas 2d",
+      "pointer drag",
+      "keyboard",
+      "text as a voice",
+      "the date as a slowly closing parameter",
+      "aria-live"
+    ],
+    "thread": "the doorframe"
   }
 ]

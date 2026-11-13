@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' blob: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src data: blob:; media-src blob:; worker-src blob:; connect-src data: blob:; base-uri 'none'; form-action 'none'">
+<title>A bit more</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="room" tabindex="0" aria-label="A dark bedroom seen from the bed. The door to a lit hall stands open. Drag sideways, or use the left and right arrow keys, to close or open the door. A child in the room tells you when the gap is wrong, and when it is right."></canvas>
+<p id="say" aria-live="polite"></p>
+<prev-iteration n="2"></prev-iteration>
+<script src="/shared/prev.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

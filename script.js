@@ -1,263 +1,305 @@
-// 1 — Under the paint
-// The doorframe from 0, closer. Nobody rubs out a height mark; they paint
-// over it, and it stays where it was, sealed between two coats. Scrolling
-// sands the frame back. Each coat gives up the marks that were pencilled on
-// it, and the same sanding that finds them takes them off. It does not go
-// back on.
+// 2 — A bit more
+// The doorframe from 0 and 1, at night, from the bed. A door left ajar is a
+// measurement as well: the exact width of what a child is afraid of, agreed
+// again every evening and never quite the same as yesterday. You hold the
+// door. You are not the one who decides where it stops.
+//
+// The agreed width is different each date, and a little narrower each date
+// than the one before. About five years after the first mark on the frame
+// it reaches nothing.
 
-const jamb = document.getElementById("jamb");
-const swatch = document.getElementById("swatch");
-const nameEl = document.getElementById("name");
-const noteEl = document.getElementById("note");
-const NS = "http://www.w3.org/2000/svg";
+const canvas = document.getElementById("room");
+const ctx = canvas.getContext("2d");
+const say = document.getElementById("say");
+const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-const DARK = "rgba(52,54,62,0.82)";
+// ---- tonight's width -------------------------------------------------------
 
-// newest first. `under` is what was put on before the colour.
-// marks: [text, height as a fraction up from the floor]
-const COATS = [
-  { name: "Pebble white", year: "2019", colour: "#ece6d6", under: "#f7f5ee", pencil: DARK, hand: 7, marks: [] },
-  { name: "Dove grey", year: "2011", colour: "#b6b8b2", under: "#f2f0e9", pencil: DARK, hand: 21,
-    marks: [["M 4.9.14", 0.33], ["M 2.3.16", 0.42], ["M 1.1.18", 0.5]] },
-  { name: "Magnolia", year: "1998", colour: "#f0e2bf", under: "#f6f3ea", pencil: DARK, hand: 33,
-    marks: [["J 7.6.99", 0.3], ["S 7.6.99", 0.47], ["J 3.8.01", 0.385], ["S 3.8.01", 0.56]] },
-  { name: "Avocado", year: "1974", colour: "#8e9a5a", under: "#e7e1cd", pencil: "rgba(40,44,40,0.85)", hand: 48,
-    marks: [["K 76", 0.35], ["K 77", 0.43], ["K 79", 0.57]] },
-  { name: "Buttermilk", year: "1958", colour: "#e5cf8e", under: "#e2d9c6", pencil: DARK, hand: 59,
-    marks: [["A 1959", 0.37], ["A 1961", 0.5]] },
-  { name: "Brunswick green", year: "1931", colour: "#2e4838", under: "#c99e93", pencil: "rgba(196,206,200,0.72)", hand: 64,
-    marks: [["W 1934", 0.39], ["W 1935", 0.455]] },
-  { name: "Bare pine", year: "1931", colour: "#c9a474", wood: true, pencil: "rgba(58,48,40,0.78)", hand: 80, marks: [] },
-];
-const DEPTH = COATS.length - 1;
+const FIRST = new Date(2026, 10, 11); // the day of the first mark, in 0
+const YEARS = 1826;                   // days until the door can be shut
 
-// single-stroke letters on a 10 x 16 grid
-const GLYPH = {
-  "0": "M5 1C1 1 1 15 5 15C9 15 9 1 5 1",
-  "1": "M3 4L6 1L6 15",
-  "2": "M2 4C2 0 9 0 8 5C7 9 3 12 2 15L9 15",
-  "3": "M2 2C8 0 9 7 4 8C10 8 9 16 2 14",
-  "4": "M7 15L7 1L1 10L9 10",
-  "5": "M8 1L3 1L2 7C8 5 10 14 2 15",
-  "6": "M8 1C3 3 1 9 2 12C3 16 9 15 8 11C7 7 3 8 2 11",
-  "7": "M2 1L9 1L4 15",
-  "8": "M5 8C1 6 2 1 5 1C8 1 9 6 5 8C0 10 1 15 5 15C9 15 10 10 5 8",
-  "9": "M8 6C7 9 2 9 2 5C2 0 8 0 8 5L7 15",
-  ".": "M5 14L5.5 14.7",
-  "'": "M5 1L4.4 4.5",
-  '"': "M4 1L3.4 4.5M7 1L6.4 4.5",
-  M: "M1 15L2 1L5 9L8 1L9 15",
-  J: "M3 1L8 1M6 1L6 12C6 16 2 15 1 12",
-  K: "M2 1L2 15M8 1L2 9L9 15",
-  A: "M1 15L5 1L9 15M3 10L7 10",
-  W: "M1 1L3 15L5 6L7 15L9 1",
-  S: "M8 3C6 0 1 1 2 5C3 8 8 8 8 12C8 16 2 15 1 12",
-};
-
-function rng(seed) {
-  let s = (seed * 2654435761) >>> 0 || 1;
-  return () => {
-    s ^= s << 13; s >>>= 0;
-    s ^= s >>> 17;
-    s ^= s << 5; s >>>= 0;
-    return s / 4294967296;
-  };
+function tonight() {
+  const now = new Date();
+  // a night belongs to the evening it began on
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (now.getHours() < 6 ? 1 : 0));
+  const days = Math.max(0, Math.round((d - FIRST) / 864e5));
+  if (days >= YEARS) return 0;
+  let h = (days + 1) * 2654435761 >>> 0;
+  h ^= h >>> 15; h = Math.imul(h, 2246822519) >>> 0; h ^= h >>> 13;
+  const jitter = (h % 1000) / 1000 - 0.5;
+  const base = 0.34 * (1 - days / YEARS);
+  return Math.min(0.5, Math.max(0.03, base + jitter * 0.1));
 }
 
-// ---------- the top coat carries the marks from 0, yours included
+const AGREED = tonight();
+const TOL = 0.02;
 
-(function topCoat() {
-  const marks = [["11.11.26", 0.37, 0]];
-  try {
-    const raw = JSON.parse(localStorage.getItem("lllll-0-doorframe") || "[]");
-    if (Array.isArray(raw)) {
-      raw
-        .filter((m) => m && typeof m.f === "number" && m.f > 0 && m.f < 1 && /^[0-9.]{5,10}$/.test(m.date))
-        .slice(-12)
-        .forEach((m, i) => marks.push([m.date, m.f, (i % 2 ? -1 : 1) * 0.5]));
+// ---- state -----------------------------------------------------------------
+
+let gap = 0.86;        // 0 shut, 1 standing fully open
+let W = 0, H = 0, dpr = 1;
+let geo = null;
+let dirty = true;
+let hall = 1;          // brightness of the hall, dips when someone walks off
+let passing = 0;       // start time of the walk, 0 if none
+let settled = false;   // the width has been accepted
+let stillTimer = 0;
+let chain = [];
+let lastLine = "";
+let turn = 0;
+
+// ---- the voice -------------------------------------------------------------
+
+function speak(text) {
+  if (!text) { say.classList.remove("on"); return; }
+  if (say.textContent === text && say.classList.contains("on")) return;
+  say.classList.remove("on");
+  setTimeout(() => {
+    say.textContent = text;
+    say.classList.add("on");
+  }, say.textContent ? (calm.matches ? 120 : 500) : 0);
+}
+
+function pick(list) {
+  let line = list[turn++ % list.length];
+  if (line === lastLine && list.length > 1) line = list[turn++ % list.length];
+  lastLine = line;
+  return line;
+}
+
+function clearChain() {
+  chain.forEach(clearTimeout);
+  chain = [];
+}
+
+function later(fn, ms) { chain.push(setTimeout(fn, ms)); }
+
+function verdict() {
+  const off = gap - AGREED;
+
+  if (AGREED === 0) {
+    // years on
+    if (gap < 0.004) { speak(""); settled = true; }
+    else speak(pick(["you can shut it.", "it's fine. shut it."]));
+    return;
+  }
+
+  if (Math.abs(off) <= TOL) {
+    if (settled) return;
+    settled = true;
+    speak("there.");
+    later(() => speak("leave it."), 3200);
+    later(() => { passing = performance.now(); loop(); }, 6200);
+    later(() => speak(""), 7200);
+    return;
+  }
+
+  const was = settled;
+  settled = false;
+  if (was) { speak(pick(["no. put it back.", "you moved it."])); stillTimer = setTimeout(verdict, 2600); return; }
+
+  if (gap < 0.004) speak(pick(["no.", "open it.", "i can't see."]));
+  else if (off < -0.12) speak(pick(["more.", "more than that."]));
+  else if (off < -0.05) speak(pick(["a bit more.", "more."]));
+  else if (off < 0) speak(pick(["a tiny bit more.", "nearly. more."]));
+  else if (off > 0.4) speak(pick(["not all the way.", "too bright."]));
+  else if (off > 0.12) speak(pick(["less.", "less than that."]));
+  else if (off > 0.05) speak(pick(["a bit less.", "less."]));
+  else speak(pick(["a tiny bit less.", "nearly. less."]));
+}
+
+function moved() {
+  dirty = true;
+  clearChain();
+  clearTimeout(stillTimer);
+  stillTimer = setTimeout(verdict, 850);
+  loop();
+}
+
+// ---- the hand on the door ---------------------------------------------------
+
+let held = null;
+
+canvas.addEventListener("pointerdown", (e) => {
+  held = { id: e.pointerId, x: e.clientX, gap };
+  try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+});
+
+canvas.addEventListener("pointermove", (e) => {
+  if (!held || e.pointerId !== held.id) return;
+  const g = Math.min(1, Math.max(0, held.gap + (e.clientX - held.x) / geo.dw * -1));
+  if (g !== gap) { gap = g; moved(); }
+});
+
+function release(e) {
+  if (held && e.pointerId === held.id) held = null;
+}
+canvas.addEventListener("pointerup", release);
+canvas.addEventListener("pointercancel", release);
+
+canvas.addEventListener("keydown", (e) => {
+  const step = e.shiftKey ? 0.04 : 0.008;
+  let g = gap;
+  if (e.key === "ArrowLeft") g += step;        // the door's edge goes left: wider
+  else if (e.key === "ArrowRight") g -= step;  // and right: narrower
+  else return;
+  e.preventDefault();
+  g = Math.min(1, Math.max(0, g));
+  if (g !== gap) { gap = g; moved(); }
+});
+
+// ---- the room ---------------------------------------------------------------
+
+function measure() {
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  const floorY = H * 0.66;
+  let dh = H * 0.5;
+  let dw = dh * 0.44;
+  if (dw > W * 0.62) { dw = W * 0.62; dh = dw / 0.44; }
+  const dx = Math.min(W - dw - 16, Math.max(16, W * 0.56 - dw / 2));
+  geo = { floorY, dh, dw, dx, top: floorY - dh };
+  dirty = true;
+}
+
+function mix(a, b, t) { return a + (b - a) * t; }
+
+function draw() {
+  const { floorY, dh, dw, dx, top } = geo;
+  const lit = hall;
+  // how much of the hall has got into the room
+  const amb = Math.pow(gap, 0.7) * lit;
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // wall
+  const wv = Math.round(mix(8, 30, amb));
+  ctx.fillStyle = `rgb(${wv},${wv + 1},${wv + 4})`;
+  ctx.fillRect(0, 0, W, floorY);
+  // floor
+  const fv = Math.round(mix(6, 22, amb));
+  ctx.fillStyle = `rgb(${fv + 2},${fv + 1},${fv + 2})`;
+  ctx.fillRect(0, floorY, W, H - floorY);
+
+  // the door's free edge
+  const edgeX = dx + dw * (1 - gap);
+  const swing = Math.sqrt(Math.max(0, 1 - (1 - gap) * (1 - gap))); // sin of the angle
+  const reach = dh * 0.13 * swing;
+
+  // light the wall catches around the opening
+  if (gap > 0.001) {
+    const cx = (edgeX + dx + dw) / 2;
+    const r = dh * (0.5 + gap * 1.1);
+    const glow = ctx.createRadialGradient(cx, top + dh * 0.5, 0, cx, top + dh * 0.5, r);
+    glow.addColorStop(0, `rgba(240,205,140,${0.10 * amb})`);
+    glow.addColorStop(1, "rgba(240,205,140,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, floorY);
+  }
+
+  // the architrave, only ever seen by what leaks round it
+  ctx.strokeStyle = `rgba(210,190,150,${0.05 + 0.16 * amb})`;
+  ctx.lineWidth = Math.max(3, dw * 0.035);
+  ctx.strokeRect(dx - ctx.lineWidth / 2, top - ctx.lineWidth / 2, dw + ctx.lineWidth, dh + ctx.lineWidth / 2 + 1);
+
+  // the hall
+  ctx.fillStyle = "#050506";
+  ctx.fillRect(dx, top, dw, dh);
+  if (gap > 0.001) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(edgeX, top, dx + dw - edgeX, dh);
+    ctx.clip();
+    const hw = ctx.createLinearGradient(0, top, 0, floorY);
+    const k = lit;
+    hw.addColorStop(0, `rgb(${Math.round(250 * k)},${Math.round(226 * k)},${Math.round(172 * k)})`);
+    hw.addColorStop(0.86, `rgb(${Math.round(236 * k)},${Math.round(196 * k)},${Math.round(128 * k)})`);
+    hw.addColorStop(0.86, `rgb(${Math.round(250 * k)},${Math.round(240 * k)},${Math.round(214 * k)})`);
+    hw.addColorStop(0.915, `rgb(${Math.round(244 * k)},${Math.round(230 * k)},${Math.round(200 * k)})`);
+    hw.addColorStop(0.915, `rgb(${Math.round(150 * k)},${Math.round(104 * k)},${Math.round(62 * k)})`);
+    hw.addColorStop(1, `rgb(${Math.round(176 * k)},${Math.round(124 * k)},${Math.round(74 * k)})`);
+    ctx.fillStyle = hw;
+    ctx.fillRect(dx, top, dw, dh);
+    ctx.restore();
+  }
+
+  // light across the bedroom floor
+  if (gap > 0.001) {
+    const sx = dx + dw * 0.8;
+    const spread = 1 + 2.4 * (H - floorY) / dh;
+    const fall = ctx.createLinearGradient(0, floorY, 0, H);
+    fall.addColorStop(0, `rgba(238,196,124,${0.20 * lit})`);
+    fall.addColorStop(1, `rgba(238,196,124,${0.035 * lit})`);
+    ctx.fillStyle = fall;
+    for (let i = 0; i < 4; i++) {
+      const soft = i * Math.max(2, dw * 0.012);
+      ctx.beginPath();
+      ctx.moveTo(edgeX - soft * 0.3, floorY);
+      ctx.lineTo(dx + dw + soft * 0.3, floorY);
+      ctx.lineTo(sx + (dx + dw - sx) * spread + soft * 3, H);
+      ctx.lineTo(sx + (edgeX - sx) * spread - soft * 3, H);
+      ctx.closePath();
+      ctx.fill();
     }
-  } catch { /* a frame with only the one mark */ }
-  COATS[0].marks = marks;
-})();
-
-// ---------- build: each older coat sits inside the hole worn in the one above
-
-const layers = []; // { outer, inner, svg } for coats 1..DEPTH
-const svgs = [];
-
-function el(tag, parent, cls) {
-  const e = document.createElement(tag);
-  if (cls) e.className = cls;
-  parent.appendChild(e);
-  return e;
-}
-
-jamb.className = "coat";
-jamb.style.backgroundColor = COATS[0].colour;
-svgs[0] = jamb.appendChild(document.createElementNS(NS, "svg"));
-let parent = jamb;
-for (let i = 1; i <= DEPTH; i++) {
-  const outer = el("div", parent);
-  outer.style.backgroundColor = COATS[i - 1].under;
-  const inner = el("div", outer, COATS[i].wood ? "wood" : "coat");
-  if (!COATS[i].wood) inner.style.backgroundColor = COATS[i].colour;
-  svgs[i] = inner.appendChild(document.createElementNS(NS, "svg"));
-  layers[i] = { outer, inner };
-  parent = inner;
-}
-
-// ---------- geometry
-
-let W = 0, H = 0, cx = 0, cy = 0, RX = 0, RY = 0, k = 1;
-const POINTS = 80;
-const sharedPh = [0.7, 2.1, 4.4];
-const ownPh = COATS.map((_, i) => { const r = rng(90 + i); return [r() * 7, r() * 7, r() * 7]; });
-
-function base(i) { return 0.9 - (i - 1) * 0.085; }
-
-function wobble(a, i) {
-  const o = ownPh[i];
-  return 1
-    + 0.07 * Math.sin(2 * a + sharedPh[0])
-    + 0.045 * Math.sin(3 * a + sharedPh[1])
-    + 0.02 * Math.sin(7 * a + sharedPh[2])
-    + 0.03 * Math.sin(4 * a + o[0])
-    + 0.018 * Math.sin(6 * a + o[1])
-    + 0.008 * Math.sin(13 * a + o[2]);
-}
-
-function hole(i, s, inset) {
-  if (s <= 0) return "polygon(0 0, 0 0, 0 0)";
-  const b = base(i) * s;
-  const shrink = Math.max(0, 1 - inset / Math.max(1, RX * b));
-  let out = "polygon(";
-  for (let j = 0; j < POINTS; j++) {
-    const a = (j / POINTS) * Math.PI * 2;
-    const r = b * wobble(a, i) * shrink;
-    out += (j ? "," : "") + (cx + Math.cos(a) * RX * r).toFixed(1) + "px " + (cy + Math.sin(a) * RY * r).toFixed(1) + "px";
   }
-  return out + ")";
-}
 
-// ---------- pencil
-
-function path(parent, d, stroke, width) {
-  const p = document.createElementNS(NS, "path");
-  p.setAttribute("d", d);
-  p.setAttribute("stroke", stroke);
-  p.setAttribute("stroke-width", width);
-  parent.appendChild(p);
-  return p;
-}
-
-function write(svg, text, x, y, size, r, colour, weight, slant) {
-  const sc = size / 16;
-  for (const ch of text) {
-    if (ch === " ") { x += size * 0.42; continue; }
-    const g = document.createElementNS(NS, "g");
-    const rot = (r() - 0.5) * 9;
-    const dy = (r() - 0.5) * size * 0.12;
-    g.setAttribute("transform",
-      `translate(${x.toFixed(1)} ${(y - size * 0.5 + dy).toFixed(1)}) scale(${sc.toFixed(3)}) skewX(${slant}) rotate(${rot.toFixed(1)} 5 8)`);
-    path(g, GLYPH[ch], colour, (weight / sc).toFixed(2));
-    svg.appendChild(g);
-    x += size * (ch === "." || ch === "'" ? 0.4 : ch === "1" ? 0.56 : 0.7);
+  // the door itself, swung in towards the bed
+  if (edgeX > dx + 0.5) {
+    const dv = Math.round(mix(11, 26, amb * 0.6));
+    const face = ctx.createLinearGradient(dx, 0, edgeX, 0);
+    face.addColorStop(0, `rgb(${dv},${dv},${dv + 2})`);
+    face.addColorStop(1, `rgb(${dv - 3},${dv - 3},${dv - 1})`);
+    ctx.fillStyle = face;
+    ctx.beginPath();
+    ctx.moveTo(dx, top);
+    ctx.lineTo(edgeX, top - reach);
+    ctx.lineTo(edgeX, floorY + reach);
+    ctx.lineTo(dx, floorY);
+    ctx.closePath();
+    ctx.fill();
   }
-  return x;
-}
-
-function widthOf(text, size) {
-  let w = 0;
-  for (const ch of text) w += size * (ch === " " ? 0.42 : ch === "." || ch === "'" ? 0.4 : ch === "1" ? 0.56 : 0.7);
-  return w;
-}
-
-function pencil() {
-  COATS.forEach((coat, i) => {
-    const svg = svgs[i];
-    svg.textContent = "";
-    const r = rng(coat.hand);
-    // one hand per coat: its own size, pressure, lean and length of line
-    const size = (13 + r() * 5) * k;
-    const weight = (1.1 + r() * 0.5) * k;
-    const slant = Math.round((r() - 0.65) * 22);
-    const len = (34 + r() * 22) * k;
-    coat.marks.forEach(([text, f, side]) => {
-      const y = (0.91 - 0.91 * f) * H;
-      const total = len + 8 * k + widthOf(text, size);
-      const x0 = cx - total / 2 + (r() - 0.5) * 22 * k + (side || 0) * RX * 0.5;
-      const tilt = (r() - 0.5) * 5 * k;
-      const bow = (r() - 0.5) * 4 * k;
-      const line = `M${x0.toFixed(1)} ${y.toFixed(1)}Q${(x0 + len / 2).toFixed(1)} ${(y + bow).toFixed(1)} ${(x0 + len).toFixed(1)} ${(y + tilt).toFixed(1)}`;
-      path(svg, line, coat.pencil, weight.toFixed(2));
-      path(svg, line, coat.pencil, (weight * 0.6).toFixed(2)).setAttribute("transform", `translate(${(r() * 2 - 1).toFixed(1)} ${(r() * 1.6 - 0.8).toFixed(1)})`);
-      write(svg, text, x0 + len + 8 * k, y + tilt, size, r, coat.pencil, weight, slant);
-    });
-  });
-
-  // the wood: one ruled line and a figure. The first thing measured
-  // against this frame was the door.
-  const svg = svgs[DEPTH];
-  const col = COATS[DEPTH].pencil;
-  const r = rng(80);
-  const half = RX * 0.3;
-  const y = cy - RY * 0.06;
-  path(svg, `M${(cx - half).toFixed(1)} ${y.toFixed(1)}L${(cx + half).toFixed(1)} ${(y - 0.6).toFixed(1)}`, col, (0.9 * k).toFixed(2));
-  // crow's foot
-  const vx = cx - half * 0.35;
-  path(svg, `M${(vx - 5 * k).toFixed(1)} ${(y + 11 * k).toFixed(1)}L${vx.toFixed(1)} ${y.toFixed(1)}L${(vx + 5 * k).toFixed(1)} ${(y + 11 * k).toFixed(1)}`, col, (0.9 * k).toFixed(2));
-  write(svg, "6' 6\"", cx - half * 0.1, y - 13 * k, 14 * k, r, col, 1 * k, -8);
-}
-
-// ---------- sanding
-
-let deepest = 0;   // how far the paper has ever gone, 0..DEPTH
-let shown = -1;
-let queued = false;
-
-function ease(t) { return 1 - (1 - t) * (1 - t); }
-
-function render() {
-  queued = false;
-  for (let i = 1; i <= DEPTH; i++) {
-    const s = ease(Math.max(0, Math.min(1, deepest - (i - 1))));
-    layers[i].outer.style.clipPath = hole(i, s, 0);
-    layers[i].inner.style.clipPath = hole(i, s, 3 * k);
+  // its edge, the one bright line in the room
+  if (gap > 0.001) {
+    const t = Math.max(1.5, dw * 0.022 * (0.4 + 0.6 * (1 - gap)));
+    const rim = ctx.createLinearGradient(edgeX - t, 0, edgeX, 0);
+    rim.addColorStop(0, `rgba(250,220,160,0)`);
+    rim.addColorStop(1, `rgba(250,220,160,${0.75 * lit})`);
+    ctx.fillStyle = rim;
+    ctx.fillRect(edgeX - t, top - reach, t, dh + reach * 2);
   }
-  const at = Math.min(DEPTH, Math.floor(deepest + 0.75));
-  if (at !== shown) {
-    shown = at;
-    swatch.style.backgroundColor = COATS[at].colour;
-    nameEl.textContent = `${COATS[at].name} ${COATS[at].year}`;
-  }
-  noteEl.textContent = deepest < 0.02 ? "scroll to sand it back" : "";
 }
 
-function ask() {
-  if (!queued) { queued = true; requestAnimationFrame(render); }
+// someone goes down the hall: the light is interrupted once, slowly
+function walk(now) {
+  if (!passing) return false;
+  const span = calm.matches ? 2600 : 1900;
+  const p = (now - passing) / span;
+  if (p >= 1) { passing = 0; hall = 1; return true; }
+  const depth = calm.matches ? 0.22 : 0.5;
+  hall = 1 - depth * Math.pow(Math.sin(Math.PI * p), 2);
+  return true;
 }
 
-function onScroll() {
-  const room = document.documentElement.scrollHeight - window.innerHeight;
-  const p = room > 0 ? (window.scrollY / room) * (DEPTH + 0.12) : 0;
-  const d = Math.max(0, Math.min(DEPTH, p));
-  if (d > deepest) { deepest = d; ask(); }
+let running = false;
+function loop() {
+  if (running) return;
+  running = true;
+  requestAnimationFrame(frame);
 }
 
-function layout() {
-  W = jamb.clientWidth || window.innerWidth;
-  H = jamb.clientHeight || window.innerHeight;
-  cx = W * 0.5;
-  cy = H * 0.47;
-  RX = Math.min(W * 0.5, H * 0.45);
-  RY = H * 0.46;
-  k = Math.max(0.85, Math.min(1.5, Math.min(W, H * 0.8) / 375));
-  pencil();
-  ask();
+function frame(now) {
+  const walking = walk(now);
+  if (dirty || walking) { draw(); dirty = false; }
+  if (walking) requestAnimationFrame(frame);
+  else running = false;
 }
 
-try { history.scrollRestoration = "manual"; } catch { /* then it opens already sanded */ }
-window.addEventListener("scroll", onScroll, { passive: true });
-window.addEventListener("resize", () => { layout(); onScroll(); });
-layout();
-onScroll();
+window.addEventListener("resize", () => { measure(); loop(); });
+measure();
+loop();
+
+// said once, if nobody has touched the door yet
+stillTimer = setTimeout(verdict, 2400);
