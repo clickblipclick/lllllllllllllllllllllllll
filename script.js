@@ -1,305 +1,177 @@
-// 2 — A bit more
-// The doorframe from 0 and 1, at night, from the bed. A door left ajar is a
-// measurement as well: the exact width of what a child is afraid of, agreed
-// again every evening and never quite the same as yesterday. You hold the
-// door. You are not the one who decides where it stops.
-//
-// The agreed width is different each date, and a little narrower each date
-// than the one before. About five years after the first mark on the frame
-// it reaches nothing.
+// 3 — No one in particular
+// The doorway of 0, 1 and 2, handed to a surveyor. The height marks on the
+// jamb were made one person at a time, with a name and a date. The sill was
+// marked by all of them at once and kept nobody: a hollow that is only the
+// sum of where feet came down. Nothing here moves. It is a drawing, revised
+// by the calendar and, very slightly, by being opened.
 
-const canvas = document.getElementById("room");
-const ctx = canvas.getContext("2d");
-const say = document.getElementById("say");
-const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
+const NS = "http://www.w3.org/2000/svg";
+const fig = document.getElementById("figure");
 
-// ---- tonight's width -------------------------------------------------------
+// ---- the survey ------------------------------------------------------------
 
-const FIRST = new Date(2026, 10, 11); // the day of the first mark, in 0
-const YEARS = 1826;                   // days until the door can be shut
+const LAID = new Date(1931, 3, 6);  // the year of the bare pine in 1
+const PER_DAY = 40;                 // a household, in and out
+const LOSS = 0.0000081;             // mm of pine per footfall
+const WIDTH = 810;                  // mm between the jambs
+const THICK = 40;                   // mm of sill
+const EXAG = 6;
 
-function tonight() {
-  const now = new Date();
-  // a night belongs to the evening it began on
-  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (now.getHours() < 6 ? 1 : 0));
-  const days = Math.max(0, Math.round((d - FIRST) / 864e5));
-  if (days >= YEARS) return 0;
-  let h = (days + 1) * 2654435761 >>> 0;
-  h ^= h >>> 15; h = Math.imul(h, 2246822519) >>> 0; h ^= h >>> 13;
-  const jitter = (h % 1000) / 1000 - 0.5;
-  const base = 0.34 * (1 - days / YEARS);
-  return Math.min(0.5, Math.max(0.03, base + jitter * 0.1));
+const now = new Date();
+const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+const days = Math.max(1, Math.round((today - LAID) / 864e5));
+const crossings = days * PER_DAY + Math.round(PER_DAY * Math.max(0, now.getHours() - 6) / 18) + 1;
+const depth = crossings * LOSS;
+
+// Where feet come down, across the opening. Two habits added together: the
+// ordinary stride, and the tighter one of someone coming round the door's
+// edge. Both sit toward the latch, because the hinge side is where the door is.
+function feet(x) {
+  const g = (m, s) => Math.exp(-((x - m) * (x - m)) / (2 * s * s));
+  return 0.5 * g(55, 150) + 0.5 * g(135, 85);
+}
+let peak = 0, peakX = 0;
+for (let x = -WIDTH / 2; x <= WIDTH / 2; x++) {
+  const f = feet(x);
+  if (f > peak) { peak = f; peakX = x; }
+}
+const wear = (x) => depth * feet(x) / peak; // mm lost at x
+
+const pad = (n) => String(n).padStart(2, "0");
+document.getElementById("depth").textContent = depth.toFixed(4);
+document.getElementById("off").textContent = String(peakX);
+document.getElementById("count").textContent = crossings.toLocaleString("en-GB");
+document.getElementById("date").textContent =
+  `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+document.getElementById("rev").textContent = days.toLocaleString("en-GB");
+
+// ---- the drawing -----------------------------------------------------------
+
+function el(parent, name, attrs) {
+  const e = document.createElementNS(NS, name);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  parent.appendChild(e);
+  return e;
 }
 
-const AGREED = tonight();
-const TOL = 0.02;
-
-// ---- state -----------------------------------------------------------------
-
-let gap = 0.86;        // 0 shut, 1 standing fully open
-let W = 0, H = 0, dpr = 1;
-let geo = null;
-let dirty = true;
-let hall = 1;          // brightness of the hall, dips when someone walks off
-let passing = 0;       // start time of the walk, 0 if none
-let settled = false;   // the width has been accepted
-let stillTimer = 0;
-let chain = [];
-let lastLine = "";
-let turn = 0;
-
-// ---- the voice -------------------------------------------------------------
-
-function speak(text) {
-  if (!text) { say.classList.remove("on"); return; }
-  if (say.textContent === text && say.classList.contains("on")) return;
-  say.classList.remove("on");
-  setTimeout(() => {
-    say.textContent = text;
-    say.classList.add("on");
-  }, say.textContent ? (calm.matches ? 120 : 500) : 0);
+function label(parent, str, x, y, anchor, faint) {
+  const t = el(parent, "text", { x, y, "text-anchor": anchor || "start" });
+  if (faint) t.setAttribute("fill-opacity", "0.5");
+  t.textContent = str;
+  return t;
 }
 
-function pick(list) {
-  let line = list[turn++ % list.length];
-  if (line === lastLine && list.length > 1) line = list[turn++ % list.length];
-  lastLine = line;
-  return line;
-}
-
-function clearChain() {
-  chain.forEach(clearTimeout);
-  chain = [];
-}
-
-function later(fn, ms) { chain.push(setTimeout(fn, ms)); }
-
-function verdict() {
-  const off = gap - AGREED;
-
-  if (AGREED === 0) {
-    // years on
-    if (gap < 0.004) { speak(""); settled = true; }
-    else speak(pick(["you can shut it.", "it's fine. shut it."]));
-    return;
+// a dimension line with a tick at each end, the way a draughtsman closes one
+function dim(parent, x1, y1, x2, y2) {
+  el(parent, "line", { x1, y1, x2, y2 });
+  for (const [x, y] of [[x1, y1], [x2, y2]]) {
+    el(parent, "line", { x1: x - 3.5, y1: y + 3.5, x2: x + 3.5, y2: y - 3.5, "stroke-width": 1.4 });
   }
-
-  if (Math.abs(off) <= TOL) {
-    if (settled) return;
-    settled = true;
-    speak("there.");
-    later(() => speak("leave it."), 3200);
-    later(() => { passing = performance.now(); loop(); }, 6200);
-    later(() => speak(""), 7200);
-    return;
-  }
-
-  const was = settled;
-  settled = false;
-  if (was) { speak(pick(["no. put it back.", "you moved it."])); stillTimer = setTimeout(verdict, 2600); return; }
-
-  if (gap < 0.004) speak(pick(["no.", "open it.", "i can't see."]));
-  else if (off < -0.12) speak(pick(["more.", "more than that."]));
-  else if (off < -0.05) speak(pick(["a bit more.", "more."]));
-  else if (off < 0) speak(pick(["a tiny bit more.", "nearly. more."]));
-  else if (off > 0.4) speak(pick(["not all the way.", "too bright."]));
-  else if (off > 0.12) speak(pick(["less.", "less than that."]));
-  else if (off > 0.05) speak(pick(["a bit less.", "less."]));
-  else speak(pick(["a tiny bit less.", "nearly. less."]));
 }
-
-function moved() {
-  dirty = true;
-  clearChain();
-  clearTimeout(stillTimer);
-  stillTimer = setTimeout(verdict, 850);
-  loop();
-}
-
-// ---- the hand on the door ---------------------------------------------------
-
-let held = null;
-
-canvas.addEventListener("pointerdown", (e) => {
-  held = { id: e.pointerId, x: e.clientX, gap };
-  try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
-});
-
-canvas.addEventListener("pointermove", (e) => {
-  if (!held || e.pointerId !== held.id) return;
-  const g = Math.min(1, Math.max(0, held.gap + (e.clientX - held.x) / geo.dw * -1));
-  if (g !== gap) { gap = g; moved(); }
-});
-
-function release(e) {
-  if (held && e.pointerId === held.id) held = null;
-}
-canvas.addEventListener("pointerup", release);
-canvas.addEventListener("pointercancel", release);
-
-canvas.addEventListener("keydown", (e) => {
-  const step = e.shiftKey ? 0.04 : 0.008;
-  let g = gap;
-  if (e.key === "ArrowLeft") g += step;        // the door's edge goes left: wider
-  else if (e.key === "ArrowRight") g -= step;  // and right: narrower
-  else return;
-  e.preventDefault();
-  g = Math.min(1, Math.max(0, g));
-  if (g !== gap) { gap = g; moved(); }
-});
-
-// ---- the room ---------------------------------------------------------------
-
-function measure() {
-  dpr = Math.min(2, window.devicePixelRatio || 1);
-  W = window.innerWidth;
-  H = window.innerHeight;
-  canvas.width = Math.round(W * dpr);
-  canvas.height = Math.round(H * dpr);
-  const floorY = H * 0.66;
-  let dh = H * 0.5;
-  let dw = dh * 0.44;
-  if (dw > W * 0.62) { dw = W * 0.62; dh = dw / 0.44; }
-  const dx = Math.min(W - dw - 16, Math.max(16, W * 0.56 - dw / 2));
-  geo = { floorY, dh, dw, dx, top: floorY - dh };
-  dirty = true;
-}
-
-function mix(a, b, t) { return a + (b - a) * t; }
 
 function draw() {
-  const { floorY, dh, dw, dx, top } = geo;
-  const lit = hall;
-  // how much of the hall has got into the room
-  const amb = Math.pow(gap, 0.7) * lit;
+  const W = fig.clientWidth, H = fig.clientHeight;
+  if (!W || !H) return;
+  fig.textContent = "";
+  const narrow = W < 520;
 
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const svg = el(fig, "svg", {
+    viewBox: `0 0 ${W} ${H}`, fill: "none", stroke: "#17283a",
+    "stroke-width": 1, "stroke-linecap": "butt", "aria-hidden": "true",
+  });
 
-  // wall
-  const wv = Math.round(mix(8, 30, amb));
-  ctx.fillStyle = `rgb(${wv},${wv + 1},${wv + 4})`;
-  ctx.fillRect(0, 0, W, floorY);
-  // floor
-  const fv = Math.round(mix(6, 22, amb));
-  ctx.fillStyle = `rgb(${fv + 2},${fv + 1},${fv + 2})`;
-  ctx.fillRect(0, floorY, W, H - floorY);
+  // scale: the sill and a stub of each jamb must fit the width, and the
+  // exaggerated section plus its dimensions must fit the height
+  const jamb = narrow ? 14 : 34; // px of jamb drawn each side
+  const k = Math.min((W - 2 * jamb - (narrow ? 8 : 60)) / WIDTH, (H - 150) / (THICK * EXAG), 1.3);
+  const sw = WIDTH * k;
+  const kv = k * EXAG;
+  const cx = Math.round(W / 2) + 0.5;
+  const x0 = cx - sw / 2, x1 = cx + sw / 2;
+  const th = THICK * kv;
+  const y0 = Math.round((H - th) / 2 + 14) + 0.5; // datum
+  const yb = y0 + th;
+  const px = (mm) => cx + mm * k;
+  const py = (mm) => y0 + wear(mm) * kv;
 
-  // the door's free edge
-  const edgeX = dx + dw * (1 - gap);
-  const swing = Math.sqrt(Math.max(0, 1 - (1 - gap) * (1 - gap))); // sin of the angle
-  const reach = dh * 0.13 * swing;
+  // the worn top, as a path
+  let top = "";
+  for (let mm = -WIDTH / 2; mm <= WIDTH / 2; mm += 3) {
+    top += `${top ? "L" : "M"}${px(mm).toFixed(2)} ${py(mm).toFixed(2)}`;
+  }
+  const body = `${top}L${x1} ${yb}L${x0} ${yb}Z`;
 
-  // light the wall catches around the opening
-  if (gap > 0.001) {
-    const cx = (edgeX + dx + dw) / 2;
-    const r = dh * (0.5 + gap * 1.1);
-    const glow = ctx.createRadialGradient(cx, top + dh * 0.5, 0, cx, top + dh * 0.5, r);
-    glow.addColorStop(0, `rgba(240,205,140,${0.10 * amb})`);
-    glow.addColorStop(1, "rgba(240,205,140,0)");
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, W, floorY);
+  // timber in section: hatched, and the hatch stops where the wood stops
+  const defs = el(svg, "defs", {});
+  const clip = el(defs, "clipPath", { id: "wood" });
+  el(clip, "path", { d: body });
+  const hatch = el(svg, "g", { "clip-path": "url(#wood)", "stroke-opacity": 0.3, "stroke-width": 0.75 });
+  const step = narrow ? 7 : 9;
+  for (let x = x0 - th; x < x1; x += step) {
+    el(hatch, "line", { x1: x, y1: yb, x2: x + th, y2: y0 });
   }
 
-  // the architrave, only ever seen by what leaks round it
-  ctx.strokeStyle = `rgba(210,190,150,${0.05 + 0.16 * amb})`;
-  ctx.lineWidth = Math.max(3, dw * 0.035);
-  ctx.strokeRect(dx - ctx.lineWidth / 2, top - ctx.lineWidth / 2, dw + ctx.lineWidth, dh + ctx.lineWidth / 2 + 1);
+  // what is gone: the space between the datum and the wood, left blank
+  el(svg, "line", { x1: x0, y1: y0, x2: x1, y2: y0, "stroke-dasharray": "7 4", "stroke-opacity": 0.6 });
+  el(svg, "path", { d: body, "stroke-width": 1.5, "stroke-linejoin": "miter" });
 
-  // the hall
-  ctx.fillStyle = "#050506";
-  ctx.fillRect(dx, top, dw, dh);
-  if (gap > 0.001) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(edgeX, top, dx + dw - edgeX, dh);
-    ctx.clip();
-    const hw = ctx.createLinearGradient(0, top, 0, floorY);
-    const k = lit;
-    hw.addColorStop(0, `rgb(${Math.round(250 * k)},${Math.round(226 * k)},${Math.round(172 * k)})`);
-    hw.addColorStop(0.86, `rgb(${Math.round(236 * k)},${Math.round(196 * k)},${Math.round(128 * k)})`);
-    hw.addColorStop(0.86, `rgb(${Math.round(250 * k)},${Math.round(240 * k)},${Math.round(214 * k)})`);
-    hw.addColorStop(0.915, `rgb(${Math.round(244 * k)},${Math.round(230 * k)},${Math.round(200 * k)})`);
-    hw.addColorStop(0.915, `rgb(${Math.round(150 * k)},${Math.round(104 * k)},${Math.round(62 * k)})`);
-    hw.addColorStop(1, `rgb(${Math.round(176 * k)},${Math.round(124 * k)},${Math.round(74 * k)})`);
-    ctx.fillStyle = hw;
-    ctx.fillRect(dx, top, dw, dh);
-    ctx.restore();
+  // jambs, cut short with a break line
+  const jh = Math.min(70, y0 - 30);
+  for (const [xa, dir] of [[x0, -1], [x1, 1]]) {
+    const xo = xa + dir * jamb;
+    el(svg, "path", {
+      d: `M${xa} ${y0}V${y0 - jh}M${xo} ${yb}V${y0 - jh}M${xa} ${yb}H${xo}`, "stroke-width": 1.5,
+    });
+    const xm = (xa + xo) / 2, yj = y0 - jh;
+    el(svg, "path", {
+      d: `M${Math.min(xa, xo) - 4} ${yj}H${xm - 4}L${xm - 1.5} ${yj - 6}L${xm + 1.5} ${yj + 6}L${xm + 4} ${yj}H${Math.max(xa, xo) + 4}`,
+      "stroke-width": 0.75,
+    });
   }
+  label(svg, "Hinge", x0 + 7, y0 - jh + 14, "start", true);
+  label(svg, "Latch", x1 - 7, y0 - jh + 14, "end", true);
 
-  // light across the bedroom floor
-  if (gap > 0.001) {
-    const sx = dx + dw * 0.8;
-    const spread = 1 + 2.4 * (H - floorY) / dh;
-    const fall = ctx.createLinearGradient(0, floorY, 0, H);
-    fall.addColorStop(0, `rgba(238,196,124,${0.20 * lit})`);
-    fall.addColorStop(1, `rgba(238,196,124,${0.035 * lit})`);
-    ctx.fillStyle = fall;
-    for (let i = 0; i < 4; i++) {
-      const soft = i * Math.max(2, dw * 0.012);
-      ctx.beginPath();
-      ctx.moveTo(edgeX - soft * 0.3, floorY);
-      ctx.lineTo(dx + dw + soft * 0.3, floorY);
-      ctx.lineTo(sx + (dx + dw - sx) * spread + soft * 3, H);
-      ctx.lineTo(sx + (edgeX - sx) * spread - soft * 3, H);
-      ctx.closePath();
-      ctx.fill();
-    }
-  }
+  // centre line, chain-dashed, and the line through the deepest point
+  const xp = px(peakX), yp = py(peakX);
+  el(svg, "line", {
+    x1: cx, y1: y0 - jh - 4, x2: cx, y2: yb + 14,
+    "stroke-dasharray": "14 3 2 3", "stroke-width": 0.75, "stroke-opacity": 0.7,
+  });
+  label(svg, "CL", cx, y0 - jh - 10, "middle", true);
 
-  // the door itself, swung in towards the bed
-  if (edgeX > dx + 0.5) {
-    const dv = Math.round(mix(11, 26, amb * 0.6));
-    const face = ctx.createLinearGradient(dx, 0, edgeX, 0);
-    face.addColorStop(0, `rgb(${dv},${dv},${dv + 2})`);
-    face.addColorStop(1, `rgb(${dv - 3},${dv - 3},${dv - 1})`);
-    ctx.fillStyle = face;
-    ctx.beginPath();
-    ctx.moveTo(dx, top);
-    ctx.lineTo(edgeX, top - reach);
-    ctx.lineTo(edgeX, floorY + reach);
-    ctx.lineTo(dx, floorY);
-    ctx.closePath();
-    ctx.fill();
-  }
-  // its edge, the one bright line in the room
-  if (gap > 0.001) {
-    const t = Math.max(1.5, dw * 0.022 * (0.4 + 0.6 * (1 - gap)));
-    const rim = ctx.createLinearGradient(edgeX - t, 0, edgeX, 0);
-    rim.addColorStop(0, `rgba(250,220,160,0)`);
-    rim.addColorStop(1, `rgba(250,220,160,${0.75 * lit})`);
-    ctx.fillStyle = rim;
-    ctx.fillRect(edgeX - t, top - reach, t, dh + reach * 2);
-  }
+  // datum note
+  label(svg, sw < 420 ? "As laid" : "As laid, 1931", x0 + 7, y0 - 6, "start", true);
+
+  // depth: witness lines out to the right of the hollow, then the dimension
+  const xd = Math.min(x1 - 12, xp + Math.max(46, sw * 0.2));
+  el(svg, "line", { x1: xp + 4, y1: yp, x2: xd + 6, y2: yp, "stroke-width": 0.75, "stroke-opacity": 0.7 });
+  dim(svg, xd, y0, xd, yp);
+  // leader from the dimension up into clear paper
+  const ly = y0 - Math.min(34, jh * 0.5);
+  el(svg, "path", { d: `M${xd} ${y0}V${ly}`, "stroke-width": 0.75, "stroke-opacity": 0.7 });
+  label(svg, depth.toFixed(4), xd - 5, ly + 9, "end");
+
+  // offset of the deepest point from the centre line
+  const yo = y0 - Math.min(56, jh * 0.8);
+  el(svg, "line", { x1: xp, y1: yp, x2: xp, y2: yo - 5, "stroke-width": 0.75, "stroke-opacity": 0.7 });
+  dim(svg, cx, yo, xp, yo);
+  label(svg, String(peakX), (cx + xp) / 2, yo - 6, "middle");
+
+  // overall width
+  const yw = yb + 26;
+  el(svg, "path", { d: `M${x0} ${yb + 6}V${yw + 5}M${x1} ${yb + 6}V${yw + 5}`, "stroke-width": 0.75, "stroke-opacity": 0.7 });
+  dim(svg, x0, yw, x1, yw);
+  label(svg, String(WIDTH), cx + 8, yw - 6, "start");
+
+  // section marks
+  label(svg, "A", x0 - (narrow ? 2 : 14), yw + 18, "middle");
+  label(svg, "A", x1 + (narrow ? 2 : 14), yw + 18, "middle");
+  label(svg, "All dimensions in millimetres", cx, yw + 34, "middle", true);
 }
 
-// someone goes down the hall: the light is interrupted once, slowly
-function walk(now) {
-  if (!passing) return false;
-  const span = calm.matches ? 2600 : 1900;
-  const p = (now - passing) / span;
-  if (p >= 1) { passing = 0; hall = 1; return true; }
-  const depth = calm.matches ? 0.22 : 0.5;
-  hall = 1 - depth * Math.pow(Math.sin(Math.PI * p), 2);
-  return true;
-}
-
-let running = false;
-function loop() {
-  if (running) return;
-  running = true;
-  requestAnimationFrame(frame);
-}
-
-function frame(now) {
-  const walking = walk(now);
-  if (dirty || walking) { draw(); dirty = false; }
-  if (walking) requestAnimationFrame(frame);
-  else running = false;
-}
-
-window.addEventListener("resize", () => { measure(); loop(); });
-measure();
-loop();
-
-// said once, if nobody has touched the door yet
-stillTimer = setTimeout(verdict, 2400);
+draw();
+let pending = 0;
+window.addEventListener("resize", () => {
+  cancelAnimationFrame(pending);
+  pending = requestAnimationFrame(draw);
+});

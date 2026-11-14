@@ -47,5 +47,29 @@
       "aria-live"
     ],
     "thread": "the doorframe"
+  },
+  {
+    "n": 3,
+    "date": "2026-11-14",
+    "title": "No one in particular",
+    "idea": "The height marks on the jamb were made one person at a time, with a name and a date; the sill was marked by everyone at once and kept nobody. The doorway of 0 to 2 handed to a surveyor: a cold measured section through the threshold, its hollow dimensioned to four decimal places, deepest off centre toward the latch because nobody walks through the middle of a door. Nothing moves; the depth is recomputed from the date and deepens by one footfall for your having opened it.",
+    "kind": "still",
+    "techniques": [
+      "generated svg",
+      "measured drawing",
+      "section hatching with clip-path",
+      "the date as a revision number",
+      "html table as a title block",
+      "monospace type"
+    ],
+    "thread": "the doorframe",
+    "usage": {
+      "input": 14,
+      "cache_write": 40147,
+      "cache_read": 367434,
+      "output": 11285,
+      "replies": 7,
+      "seconds": 128
+    }
   }
 ]
