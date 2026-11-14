@@ -13,6 +13,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { ROOT, FILES, KINDS } from "./rules.mjs";
 import { check } from "./check.mjs";
+import { sessionUsage } from "./usage.mjs";
 
 function fail(problems) {
   console.error("NOT published:\n" + problems.map((p) => `  - ${p}`).join("\n"));
@@ -41,6 +42,7 @@ function readJournal() {
       problems.push(`${at}: "techniques" must be a non-empty list of strings`);
     }
     if (!(e?.thread === null || str(e?.thread))) problems.push(`${at}: "thread" must be a string or null`);
+    if (!(e?.usage === undefined || (e.usage && typeof e.usage === "object"))) problems.push(`${at}: "usage" is filled in by this script; leave it out`);
     if (!fs.existsSync(path.join(ROOT, String(i), "index.html"))) problems.push(`${at}: folder /${i}/ is missing`);
   });
   if (problems.length) fail(problems);
@@ -89,4 +91,19 @@ const problems = [
 if (problems.length) fail(problems);
 
 for (const f of FILES) fs.copyFileSync(path.join(ROOT, String(n), f), path.join(ROOT, f));
+
+// Record what the run has used so far (tokens, replies, seconds) in the new
+// entry. Only done when rewriting the file leaves every earlier entry exactly
+// as it was.
+const usage = sessionUsage();
+if (usage) {
+  const file = path.join(ROOT, "journal.json");
+  const text = (j) => JSON.stringify(j, null, 2) + "\n";
+  if (fs.readFileSync(file, "utf8") === text(journal)) {
+    journal[n] = { ...journal[n], usage };
+    fs.writeFileSync(file, text(journal));
+  } else {
+    console.error("Usage not recorded: journal.json is not in the standard two-space layout.");
+  }
+}
 console.log(`Published iteration ${n}: "${journal[n].title}"${staticOnly ? " (static checks only)" : ""}. Ready to commit.`);

@@ -94,6 +94,11 @@ an old one, and so a theme that is forming can be noticed and continued.
 - `kind` is `"interactive"` or `"still"`.
 - `thread` is `null`, or a short name for a theme this piece deliberately
   continues or starts. Reuse the exact name used by earlier entries.
+- Do not write a `usage` field. The publish script adds it to the new entry
+  on its own: the tokens the run had used by the time it published (`input`,
+  `cache_write`, `cache_read`, `output`), the number of model `replies`, and
+  the `seconds` since the run began. It is missing when the script could not
+  measure it.
 
 ## Making the next iteration
 
