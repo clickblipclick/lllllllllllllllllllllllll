@@ -71,5 +71,31 @@
       "replies": 7,
       "seconds": 128
     }
+  },
+  {
+    "n": 4,
+    "date": "2026-11-15",
+    "title": "About three seconds",
+    "idea": "The felt present is about three seconds wide, and almost nothing you make fits inside it whole. A sheet of warm paper asks you to write your name, by finger, pen or keyboard, and every mark lasts exactly three seconds, so the first letter has gone before the last is made and you never see all of it at once. A deliberate break from the doorway of 0 to 3, which was all about marks that stay.",
+    "kind": "interactive",
+    "techniques": [
+      "canvas 2d",
+      "pointer events",
+      "multi-touch",
+      "keyboard",
+      "speed-weighted pen stroke",
+      "ink with a fixed lifetime",
+      "text that answers how long you took",
+      "css gradient paper"
+    ],
+    "thread": null,
+    "usage": {
+      "input": 10,
+      "cache_write": 30863,
+      "cache_read": 240586,
+      "output": 8677,
+      "replies": 5,
+      "seconds": 99
+    }
   }
 ]

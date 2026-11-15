@@ -1,104 +1,58 @@
-/* A drafting sheet. Cold on purpose: the three pieces before this one were
-   warm rooms, and this is the same doorway handed to a surveyor. */
-
-:root {
-  --paper: #e6eae7;
-  --ink: #17283a;
-  --faint: rgba(23, 40, 58, 0.42);
-}
+/* A sheet of warm paper and one line of small type. Nothing here is from the
+   doorway; this is the first piece made somewhere else. */
 
 html, body {
   margin: 0;
   height: 100%;
-  background: var(--paper);
-  color: var(--ink);
+  overflow: hidden;
+  background: #efe6d3;
+  overscroll-behavior: none;
 }
 
 body {
-  font: 10.5px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-#sheet {
-  box-sizing: border-box;
-  min-height: 100%;
-  height: 100%;
-  padding: 20px 22px 20px;
-  display: flex;
-  flex-direction: column;
-  /* the sheet's border line */
+  /* paper: a little unevenness, a little shade toward the edges */
   background:
-    linear-gradient(var(--ink), var(--ink)) 8px 8px / calc(100% - 16px) 1px no-repeat,
-    linear-gradient(var(--ink), var(--ink)) 8px calc(100% - 8px) / calc(100% - 16px) 1px no-repeat,
-    linear-gradient(var(--ink), var(--ink)) 8px 8px / 1px calc(100% - 16px) no-repeat,
-    linear-gradient(var(--ink), var(--ink)) calc(100% - 8px) 8px / 1px calc(100% - 16px) no-repeat;
+    radial-gradient(120% 90% at 50% 40%, rgba(255, 250, 235, 0.55), rgba(255, 250, 235, 0) 60%),
+    radial-gradient(140% 120% at 50% 50%, rgba(120, 90, 50, 0) 55%, rgba(120, 90, 50, 0.16) 100%),
+    repeating-linear-gradient(91deg, rgba(110, 85, 50, 0.022) 0 1px, rgba(110, 85, 50, 0) 1px 3px),
+    #efe6d3;
 }
 
-#notes {
-  max-width: 54em;
-  flex: none;
-}
-
-#notes h1 {
-  margin: 0 0 0.3em;
-  font: inherit;
-  letter-spacing: 0.3em;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-#notes ol {
-  margin: 0;
-  padding: 0 0 0 2.4em;
-}
-
-#notes li { padding-left: 0.4em; }
-#notes b { font-weight: inherit; font-variant-numeric: tabular-nums; }
-
-#figure {
-  flex: 1 1 auto;
-  min-height: 150px;
-  position: relative;
-}
-
-#figure svg {
-  position: absolute;
+#page {
+  position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
   display: block;
-  overflow: visible;
+  touch-action: none;
+  cursor: crosshair;
+  outline: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-#figure text {
-  font: inherit;
-  letter-spacing: 0.06em;
-  fill: var(--ink);
-  stroke: none;
+#say {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: max(15vh, 64px);
+  margin: 0;
+  padding: 0 56px;
+  text-align: center;
+  font: italic 17px/1.4 "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  letter-spacing: 0.02em;
+  color: #4a3d2c;
+  opacity: 0.72;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: opacity 1.2s ease;
 }
 
-#block {
-  flex: none;
-  align-self: flex-end;
-  border-collapse: collapse;
-  max-width: calc(100% - 44px); /* the corner by the door is kept clear */
-}
+#say.away { opacity: 0; transition-duration: 0.5s; }
 
-#block th, #block td {
-  border: 1px solid var(--ink);
-  padding: 2px 8px;
-  text-align: left;
-  font-weight: inherit;
-  white-space: nowrap;
-}
-
-#block th { color: var(--faint); }
-#block td { font-variant-numeric: tabular-nums; }
-
-@media (max-height: 520px) {
-  #sheet { height: auto; }
-  #figure { min-height: 200px; }
+@media (prefers-reduced-motion: reduce) {
+  #say, #say.away { transition-duration: 0.01s; }
 }

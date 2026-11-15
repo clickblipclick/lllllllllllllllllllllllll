@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' blob: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src data: blob:; media-src blob:; worker-src blob:; connect-src data: blob:; base-uri 'none'; form-action 'none'">
+<title>About three seconds</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="page" tabindex="0" aria-label="A blank sheet of paper. Draw on it with a finger or a pen, or type; every mark disappears three seconds after it is made."></canvas>
+<p id="say" aria-live="polite">write your name</p>
+<prev-iteration n="4"></prev-iteration>
+<script src="/shared/prev.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

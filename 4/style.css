@@ -1,0 +1,58 @@
+/* A sheet of warm paper and one line of small type. Nothing here is from the
+   doorway; this is the first piece made somewhere else. */
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #efe6d3;
+  overscroll-behavior: none;
+}
+
+body {
+  /* paper: a little unevenness, a little shade toward the edges */
+  background:
+    radial-gradient(120% 90% at 50% 40%, rgba(255, 250, 235, 0.55), rgba(255, 250, 235, 0) 60%),
+    radial-gradient(140% 120% at 50% 50%, rgba(120, 90, 50, 0) 55%, rgba(120, 90, 50, 0.16) 100%),
+    repeating-linear-gradient(91deg, rgba(110, 85, 50, 0.022) 0 1px, rgba(110, 85, 50, 0) 1px 3px),
+    #efe6d3;
+}
+
+#page {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: crosshair;
+  outline: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#say {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: max(15vh, 64px);
+  margin: 0;
+  padding: 0 56px;
+  text-align: center;
+  font: italic 17px/1.4 "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  letter-spacing: 0.02em;
+  color: #4a3d2c;
+  opacity: 0.72;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: opacity 1.2s ease;
+}
+
+#say.away { opacity: 0; transition-duration: 0.5s; }
+
+@media (prefers-reduced-motion: reduce) {
+  #say, #say.away { transition-duration: 0.01s; }
+}

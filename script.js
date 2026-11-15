@@ -1,177 +1,288 @@
-// 3 — No one in particular
-// The doorway of 0, 1 and 2, handed to a surveyor. The height marks on the
-// jamb were made one person at a time, with a name and a date. The sill was
-// marked by all of them at once and kept nobody: a hollow that is only the
-// sum of where feet came down. Nothing here moves. It is a drawing, revised
-// by the calendar and, very slightly, by being opened.
+// About three seconds.
+//
+// The felt present, the stretch that seems to be "now" all at once, is
+// usually put at about three seconds. This page is a sheet of paper whose ink
+// lasts exactly that long. You are asked to write your name. Unless it is a
+// very short name, the first letter has gone before the last is made, and you
+// never see the whole of it. That is the piece.
 
-const NS = "http://www.w3.org/2000/svg";
-const fig = document.getElementById("figure");
+const NOW = 3000;            // how long any mark lasts, in ms
+const GOING = 450;           // the last part of that, spent leaving
 
-// ---- the survey ------------------------------------------------------------
+const canvas = document.getElementById("page");
+const say = document.getElementById("say");
+const ctx = canvas.getContext("2d");
+const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-const LAID = new Date(1931, 3, 6);  // the year of the bare pine in 1
-const PER_DAY = 40;                 // a household, in and out
-const LOSS = 0.0000081;             // mm of pine per footfall
-const WIDTH = 810;                  // mm between the jambs
-const THICK = 40;                   // mm of sill
-const EXAG = 6;
+let W = 0, H = 0, dpr = 1;
 
-const now = new Date();
-const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-const days = Math.max(1, Math.round((today - LAID) / 864e5));
-const crossings = days * PER_DAY + Math.round(PER_DAY * Math.max(0, now.getHours() - 6) / 18) + 1;
-const depth = crossings * LOSS;
-
-// Where feet come down, across the opening. Two habits added together: the
-// ordinary stride, and the tighter one of someone coming round the door's
-// edge. Both sit toward the latch, because the hinge side is where the door is.
-function feet(x) {
-  const g = (m, s) => Math.exp(-((x - m) * (x - m)) / (2 * s * s));
-  return 0.5 * g(55, 150) + 0.5 * g(135, 85);
-}
-let peak = 0, peakX = 0;
-for (let x = -WIDTH / 2; x <= WIDTH / 2; x++) {
-  const f = feet(x);
-  if (f > peak) { peak = f; peakX = x; }
-}
-const wear = (x) => depth * feet(x) / peak; // mm lost at x
-
-const pad = (n) => String(n).padStart(2, "0");
-document.getElementById("depth").textContent = depth.toFixed(4);
-document.getElementById("off").textContent = String(peakX);
-document.getElementById("count").textContent = crossings.toLocaleString("en-GB");
-document.getElementById("date").textContent =
-  `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-document.getElementById("rev").textContent = days.toLocaleString("en-GB");
-
-// ---- the drawing -----------------------------------------------------------
-
-function el(parent, name, attrs) {
-  const e = document.createElementNS(NS, name);
-  for (const k in attrs) e.setAttribute(k, attrs[k]);
-  parent.appendChild(e);
-  return e;
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  draw(performance.now());
 }
 
-function label(parent, str, x, y, anchor, faint) {
-  const t = el(parent, "text", { x, y, "text-anchor": anchor || "start" });
-  if (faint) t.setAttribute("fill-opacity", "0.5");
-  t.textContent = str;
-  return t;
-}
+// ---- the marks ----------------------------------------------------------
 
-// a dimension line with a tick at each end, the way a draughtsman closes one
-function dim(parent, x1, y1, x2, y2) {
-  el(parent, "line", { x1, y1, x2, y2 });
-  for (const [x, y] of [[x1, y1], [x2, y2]]) {
-    el(parent, "line", { x1: x - 3.5, y1: y + 3.5, x2: x + 3.5, y2: y - 3.5, "stroke-width": 1.4 });
+// Each stroke is a list of points {x, y, t, w}. Each typed letter is
+// {ch, x, y, t, tilt}. Everything is thrown away NOW ms after its own t.
+let strokes = [];
+let letters = [];
+const pens = new Map();      // pointerId -> stroke being made
+
+// One "attempt" runs from the first mark on an empty sheet until the sheet is
+// empty again. What matters is whether it fitted inside the three seconds.
+let began = 0, last = 0, attempts = 0, active = false;
+
+function mark(t) {
+  if (!active) {
+    active = true;
+    began = t;
+    say.classList.add("away");
   }
+  last = t;
+  wake();
 }
 
-function draw() {
-  const W = fig.clientWidth, H = fig.clientHeight;
-  if (!W || !H) return;
-  fig.textContent = "";
-  const narrow = W < 520;
+function nib(speed) {
+  // a soft pen: slow is heavy, fast is thin
+  const base = Math.max(2.2, Math.min(W, H) / 190);
+  return base * (0.55 + 1.15 / (1 + speed * 1.4));
+}
 
-  const svg = el(fig, "svg", {
-    viewBox: `0 0 ${W} ${H}`, fill: "none", stroke: "#17283a",
-    "stroke-width": 1, "stroke-linecap": "butt", "aria-hidden": "true",
-  });
+function penDown(e) {
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+  canvas.focus({ preventScroll: true });
+  try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+  const t = performance.now();
+  const s = [{ x: e.clientX, y: e.clientY, t, w: nib(0.2) }];
+  strokes.push(s);
+  pens.set(e.pointerId, s);
+  mark(t);
+  e.preventDefault();
+}
 
-  // scale: the sill and a stub of each jamb must fit the width, and the
-  // exaggerated section plus its dimensions must fit the height
-  const jamb = narrow ? 14 : 34; // px of jamb drawn each side
-  const k = Math.min((W - 2 * jamb - (narrow ? 8 : 60)) / WIDTH, (H - 150) / (THICK * EXAG), 1.3);
-  const sw = WIDTH * k;
-  const kv = k * EXAG;
-  const cx = Math.round(W / 2) + 0.5;
-  const x0 = cx - sw / 2, x1 = cx + sw / 2;
-  const th = THICK * kv;
-  const y0 = Math.round((H - th) / 2 + 14) + 0.5; // datum
-  const yb = y0 + th;
-  const px = (mm) => cx + mm * k;
-  const py = (mm) => y0 + wear(mm) * kv;
+function penMove(e) {
+  const s = pens.get(e.pointerId);
+  if (!s) return;
+  const t = performance.now();
+  const p = s[s.length - 1];
+  const dx = e.clientX - p.x, dy = e.clientY - p.y;
+  const d = Math.hypot(dx, dy);
+  if (d < 1.2) return;
+  const speed = d / Math.max(1, t - p.t);              // px per ms
+  const w = p.w + (nib(speed) - p.w) * 0.35;           // the nib has some weight
+  s.push({ x: e.clientX, y: e.clientY, t, w });
+  mark(t);
+}
 
-  // the worn top, as a path
-  let top = "";
-  for (let mm = -WIDTH / 2; mm <= WIDTH / 2; mm += 3) {
-    top += `${top ? "L" : "M"}${px(mm).toFixed(2)} ${py(mm).toFixed(2)}`;
+function penUp(e) {
+  pens.delete(e.pointerId);
+}
+
+canvas.addEventListener("pointerdown", penDown);
+canvas.addEventListener("pointermove", penMove);
+canvas.addEventListener("pointerup", penUp);
+canvas.addEventListener("pointercancel", penUp);
+canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+// Typing is the same act with a different hand. There is no backspace: a
+// letter cannot be taken back, only outlasted.
+let caretX = 0, caretY = 0;
+
+function typeSize() {
+  return Math.max(26, Math.min(54, W / 16));
+}
+
+function typeFont() {
+  return `italic ${typeSize()}px "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif`;
+}
+
+window.addEventListener("keydown", (e) => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key.length !== 1 && e.key !== "Enter") return;
+  const t = performance.now();
+  const size = typeSize();
+  const margin = Math.max(28, W * 0.12);
+  if (!letters.length) {
+    caretX = margin;
+    caretY = H * 0.42;
   }
-  const body = `${top}L${x1} ${yb}L${x0} ${yb}Z`;
-
-  // timber in section: hatched, and the hatch stops where the wood stops
-  const defs = el(svg, "defs", {});
-  const clip = el(defs, "clipPath", { id: "wood" });
-  el(clip, "path", { d: body });
-  const hatch = el(svg, "g", { "clip-path": "url(#wood)", "stroke-opacity": 0.3, "stroke-width": 0.75 });
-  const step = narrow ? 7 : 9;
-  for (let x = x0 - th; x < x1; x += step) {
-    el(hatch, "line", { x1: x, y1: yb, x2: x + th, y2: y0 });
+  if (e.key === "Enter") {
+    caretX = margin;
+    caretY += size * 1.35;
+    e.preventDefault();
+    return;
   }
-
-  // what is gone: the space between the datum and the wood, left blank
-  el(svg, "line", { x1: x0, y1: y0, x2: x1, y2: y0, "stroke-dasharray": "7 4", "stroke-opacity": 0.6 });
-  el(svg, "path", { d: body, "stroke-width": 1.5, "stroke-linejoin": "miter" });
-
-  // jambs, cut short with a break line
-  const jh = Math.min(70, y0 - 30);
-  for (const [xa, dir] of [[x0, -1], [x1, 1]]) {
-    const xo = xa + dir * jamb;
-    el(svg, "path", {
-      d: `M${xa} ${y0}V${y0 - jh}M${xo} ${yb}V${y0 - jh}M${xa} ${yb}H${xo}`, "stroke-width": 1.5,
+  ctx.font = typeFont();
+  const adv = ctx.measureText(e.key).width;
+  if (caretX + adv > W - margin) {
+    caretX = margin;
+    caretY += size * 1.35;
+  }
+  if (caretY > H - size) caretY = H * 0.42;
+  if (e.key !== " ") {
+    letters.push({
+      ch: e.key, x: caretX, y: caretY + (Math.random() - 0.5) * size * 0.07, t,
+      tilt: (Math.random() - 0.5) * 0.05,
     });
-    const xm = (xa + xo) / 2, yj = y0 - jh;
-    el(svg, "path", {
-      d: `M${Math.min(xa, xo) - 4} ${yj}H${xm - 4}L${xm - 1.5} ${yj - 6}L${xm + 1.5} ${yj + 6}L${xm + 4} ${yj}H${Math.max(xa, xo) + 4}`,
-      "stroke-width": 0.75,
-    });
+    mark(t);
   }
-  label(svg, "Hinge", x0 + 7, y0 - jh + 14, "start", true);
-  label(svg, "Latch", x1 - 7, y0 - jh + 14, "end", true);
-
-  // centre line, chain-dashed, and the line through the deepest point
-  const xp = px(peakX), yp = py(peakX);
-  el(svg, "line", {
-    x1: cx, y1: y0 - jh - 4, x2: cx, y2: yb + 14,
-    "stroke-dasharray": "14 3 2 3", "stroke-width": 0.75, "stroke-opacity": 0.7,
-  });
-  label(svg, "CL", cx, y0 - jh - 10, "middle", true);
-
-  // datum note
-  label(svg, sw < 420 ? "As laid" : "As laid, 1931", x0 + 7, y0 - 6, "start", true);
-
-  // depth: witness lines out to the right of the hollow, then the dimension
-  const xd = Math.min(x1 - 12, xp + Math.max(46, sw * 0.2));
-  el(svg, "line", { x1: xp + 4, y1: yp, x2: xd + 6, y2: yp, "stroke-width": 0.75, "stroke-opacity": 0.7 });
-  dim(svg, xd, y0, xd, yp);
-  // leader from the dimension up into clear paper
-  const ly = y0 - Math.min(34, jh * 0.5);
-  el(svg, "path", { d: `M${xd} ${y0}V${ly}`, "stroke-width": 0.75, "stroke-opacity": 0.7 });
-  label(svg, depth.toFixed(4), xd - 5, ly + 9, "end");
-
-  // offset of the deepest point from the centre line
-  const yo = y0 - Math.min(56, jh * 0.8);
-  el(svg, "line", { x1: xp, y1: yp, x2: xp, y2: yo - 5, "stroke-width": 0.75, "stroke-opacity": 0.7 });
-  dim(svg, cx, yo, xp, yo);
-  label(svg, String(peakX), (cx + xp) / 2, yo - 6, "middle");
-
-  // overall width
-  const yw = yb + 26;
-  el(svg, "path", { d: `M${x0} ${yb + 6}V${yw + 5}M${x1} ${yb + 6}V${yw + 5}`, "stroke-width": 0.75, "stroke-opacity": 0.7 });
-  dim(svg, x0, yw, x1, yw);
-  label(svg, String(WIDTH), cx + 8, yw - 6, "start");
-
-  // section marks
-  label(svg, "A", x0 - (narrow ? 2 : 14), yw + 18, "middle");
-  label(svg, "A", x1 + (narrow ? 2 : 14), yw + 18, "middle");
-  label(svg, "All dimensions in millimetres", cx, yw + 34, "middle", true);
-}
-
-draw();
-let pending = 0;
-window.addEventListener("resize", () => {
-  cancelAnimationFrame(pending);
-  pending = requestAnimationFrame(draw);
+  caretX += adv + size * 0.02;
+  e.preventDefault();
 });
+
+// ---- drawing -------------------------------------------------------------
+
+function alphaAt(age) {
+  if (age >= NOW) return 0;
+  const left = NOW - age;
+  return left > GOING ? 1 : left / GOING;
+}
+
+function draw(now) {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "#231c2b";
+  ctx.fillStyle = "#231c2b";
+
+  for (const s of strokes) {
+    if (s.length === 1) {
+      const p = s[0];
+      const a = alphaAt(now - p.t);
+      if (a <= 0) continue;
+      ctx.globalAlpha = a * 0.9;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.w * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+      continue;
+    }
+    // Smoothed through the midpoints, one short curve per point so that each
+    // can have its own weight and its own age.
+    for (let i = 1; i < s.length; i++) {
+      const p0 = s[i - 1], p1 = s[i];
+      const a = alphaAt(now - p0.t);
+      if (a <= 0) continue;
+      const pp = s[i - 2] || p0;
+      const ax = i === 1 ? p0.x : (pp.x + p0.x) / 2;
+      const ay = i === 1 ? p0.y : (pp.y + p0.y) / 2;
+      const last = i === s.length - 1;
+      const bx = last ? p1.x : (p0.x + p1.x) / 2;
+      const by = last ? p1.y : (p0.y + p1.y) / 2;
+      ctx.globalAlpha = a * 0.9;
+      ctx.lineWidth = p1.w * (0.6 + 0.4 * a);
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.quadraticCurveTo(p0.x, p0.y, bx, by);
+      ctx.stroke();
+    }
+  }
+
+  if (letters.length) {
+    ctx.font = typeFont();
+    ctx.textBaseline = "alphabetic";
+    for (const l of letters) {
+      const a = alphaAt(now - l.t);
+      if (a <= 0) continue;
+      ctx.globalAlpha = a * 0.9;
+      ctx.setTransform(dpr, 0, 0, dpr, l.x * dpr, l.y * dpr);
+      ctx.rotate(l.tilt);
+      ctx.fillText(l.ch, 0, 0);
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function forget(now) {
+  for (const s of strokes) {
+    // keep one expired point as the start of the oldest living segment
+    let k = 0;
+    while (k < s.length - 1 && now - s[k + 1].t >= NOW) k++;
+    if (k) s.splice(0, k);
+  }
+  strokes = strokes.filter((s) => {
+    if (now - s[s.length - 1].t < NOW) return true;
+    for (const held of pens.values()) if (held === s) return true;   // pen resting on the paper
+    return false;
+  });
+  letters = letters.filter((l) => now - l.t < NOW);
+}
+
+// ---- the one line of type -------------------------------------------------
+
+const after = [
+  "you never saw all of it at once",
+  "this is about how wide now is",
+  "everything longer than this is memory",
+];
+const fitted = [
+  "that fitted. write all of it",
+  "anything that short, you can have whole",
+];
+let longs = 0, shorts = 0, sayTimer = 0;
+
+function speak(text, delay) {
+  clearTimeout(sayTimer);
+  sayTimer = setTimeout(() => {
+    say.textContent = text;
+    say.classList.remove("away");
+  }, delay);
+}
+
+function emptied() {
+  active = false;
+  attempts++;
+  const span = last - began;
+  if (span < 600) {
+    speak("write your name", 500);                       // a dot is not an attempt
+  } else if (span < NOW - 200) {
+    speak(fitted[shorts++ % fitted.length], 700);
+  } else {
+    const line = after[longs++ % after.length];
+    speak(line, 900);
+    // and after a while, ask again
+    const mine = attempts;
+    setTimeout(() => {
+      if (!active && attempts === mine) {
+        say.classList.add("away");
+        speak("write your name", 1400);
+      }
+    }, 9000);
+  }
+}
+
+// ---- the clock -------------------------------------------------------------
+
+let running = false;
+
+function wake() {
+  if (running) return;
+  running = true;
+  requestAnimationFrame(tick);
+}
+
+function tick(now) {
+  forget(now);
+  draw(now);
+  if (strokes.length || letters.length) {
+    requestAnimationFrame(tick);
+  } else {
+    running = false;
+    if (active) emptied();
+  }
+}
+
+window.addEventListener("resize", resize);
+document.addEventListener("visibilitychange", () => {
+  // time went on while the page was not looked at; so did the ink
+  if (!document.hidden && (strokes.length || letters.length)) wake();
+});
+if (calm.addEventListener) calm.addEventListener("change", () => draw(performance.now()));
+
+resize();
