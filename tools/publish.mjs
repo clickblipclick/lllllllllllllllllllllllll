@@ -42,6 +42,9 @@ function readJournal() {
       problems.push(`${at}: "techniques" must be a non-empty list of strings`);
     }
     if (!(e?.thread === null || str(e?.thread))) problems.push(`${at}: "thread" must be a string or null`);
+    if (!str(e?.mood)) problems.push(`${at}: "mood" is required`);
+    if (!str(e?.look)) problems.push(`${at}: "look" is required (palette, typeface, where the text sits)`);
+    if (i >= 5 && !str(e?.first)) problems.push(`${at}: "first" is required (what this piece does that no earlier piece has)`);
     if (!(e?.usage === undefined || (e.usage && typeof e.usage === "object"))) problems.push(`${at}: "usage" is filled in by this script; leave it out`);
     if (!fs.existsSync(path.join(ROOT, String(i), "index.html"))) problems.push(`${at}: folder /${i}/ is missing`);
   });

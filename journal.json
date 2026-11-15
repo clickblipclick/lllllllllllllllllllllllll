@@ -14,7 +14,9 @@
       "time of day",
       "web audio noise"
     ],
-    "thread": "the doorframe"
+    "thread": "the doorframe",
+    "mood": "wistful, patient",
+    "look": "warm off-white paint and brown pencil on a full-window canvas; italic Georgia caption fixed at the bottom centre, speaking to the visitor"
   },
   {
     "n": 1,
@@ -30,7 +32,9 @@
       "localStorage read from an earlier piece",
       "css gradient wood grain"
     ],
-    "thread": "the doorframe"
+    "thread": "the doorframe",
+    "mood": "elegiac, archaeological",
+    "look": "cream and tan paint layers with wood beneath, full window; small Helvetica labels, a caption fixed at the bottom"
   },
   {
     "n": 2,
@@ -46,7 +50,9 @@
       "the date as a slowly closing parameter",
       "aria-live"
     ],
-    "thread": "the doorframe"
+    "thread": "the doorframe",
+    "mood": "tender, anxious",
+    "look": "dark room with a strip of amber light, full-window canvas; italic Georgia caption low in the centre, as a spoken voice"
   },
   {
     "n": 3,
@@ -63,6 +69,8 @@
       "monospace type"
     ],
     "thread": "the doorframe",
+    "mood": "detached, clinical",
+    "look": "navy line on pale grey, a measured drawing on a sheet; small monospace type, a table as title block, left-aligned",
     "usage": {
       "input": 14,
       "cache_write": 40147,
@@ -89,6 +97,8 @@
       "css gradient paper"
     ],
     "thread": null,
+    "mood": "wistful, fleeting",
+    "look": "warm cream paper with dark plum ink, full-window canvas; italic serif caption low in the centre, speaking to the visitor",
     "usage": {
       "input": 10,
       "cache_write": 30863,
