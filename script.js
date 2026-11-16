@@ -1,288 +1,140 @@
-// About three seconds.
-//
-// The felt present, the stretch that seems to be "now" all at once, is
-// usually put at about three seconds. This page is a sheet of paper whose ink
-// lasts exactly that long. You are asked to write your name. Unless it is a
-// very short name, the first letter has gone before the last is made, and you
-// never see the whole of it. That is the piece.
+// Now serving.
+// A queue that only moves while nobody is watching it. The number on the sign
+// advances one place for every STEP of time this page spends hidden or closed,
+// and never while it is visible. So your number can only be called when you
+// are not here to answer it.
+(() => {
+  const STEP = 15000; // one number per fifteen seconds unwatched
+  const KEY = "l25.5.queue";
+  const TITLE = document.title;
+  const $ = (id) => document.getElementById(id);
+  const pad = (n) => String(n % 1000).padStart(3, "0");
+  const hhmm = (t) => {
+    const d = new Date(t);
+    return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  };
 
-const NOW = 3000;            // how long any mark lasts, in ms
-const GOING = 450;           // the last part of that, spent leaving
-
-const canvas = document.getElementById("page");
-const say = document.getElementById("say");
-const ctx = canvas.getContext("2d");
-const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
-
-let W = 0, H = 0, dpr = 1;
-
-function resize() {
-  dpr = Math.min(window.devicePixelRatio || 1, 2);
-  W = window.innerWidth;
-  H = window.innerHeight;
-  canvas.width = Math.round(W * dpr);
-  canvas.height = Math.round(H * dpr);
-  draw(performance.now());
-}
-
-// ---- the marks ----------------------------------------------------------
-
-// Each stroke is a list of points {x, y, t, w}. Each typed letter is
-// {ch, x, y, t, tilt}. Everything is thrown away NOW ms after its own t.
-let strokes = [];
-let letters = [];
-const pens = new Map();      // pointerId -> stroke being made
-
-// One "attempt" runs from the first mark on an empty sheet until the sheet is
-// empty again. What matters is whether it fitted inside the three seconds.
-let began = 0, last = 0, attempts = 0, active = false;
-
-function mark(t) {
-  if (!active) {
-    active = true;
-    began = t;
-    say.classList.add("away");
+  // ---- state -------------------------------------------------------------
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* no memory */ }
+  if (!s || typeof s.serving !== "number" || typeof s.ticket !== "number") {
+    const serving = 23 + Math.floor(Math.random() * 40);
+    s = { serving, ticket: serving + 4, issued: Date.now(), away: null, missed: [] };
   }
-  last = t;
-  wake();
-}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* fine */ } };
 
-function nib(speed) {
-  // a soft pen: slow is heavy, fast is thin
-  const base = Math.max(2.2, Math.min(W, H) / 190);
-  return base * (0.55 + 1.15 / (1 + speed * 1.4));
-}
+  // where the sign would be if it had been advancing since s.away
+  const servingAt = (now) => s.away == null ? s.serving : s.serving + Math.max(0, Math.floor((now - s.away) / STEP));
 
-function penDown(e) {
-  if (e.pointerType === "mouse" && e.button !== 0) return;
-  canvas.focus({ preventScroll: true });
-  try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
-  const t = performance.now();
-  const s = [{ x: e.clientX, y: e.clientY, t, w: nib(0.2) }];
-  strokes.push(s);
-  pens.set(e.pointerId, s);
-  mark(t);
-  e.preventDefault();
-}
-
-function penMove(e) {
-  const s = pens.get(e.pointerId);
-  if (!s) return;
-  const t = performance.now();
-  const p = s[s.length - 1];
-  const dx = e.clientX - p.x, dy = e.clientY - p.y;
-  const d = Math.hypot(dx, dy);
-  if (d < 1.2) return;
-  const speed = d / Math.max(1, t - p.t);              // px per ms
-  const w = p.w + (nib(speed) - p.w) * 0.35;           // the nib has some weight
-  s.push({ x: e.clientX, y: e.clientY, t, w });
-  mark(t);
-}
-
-function penUp(e) {
-  pens.delete(e.pointerId);
-}
-
-canvas.addEventListener("pointerdown", penDown);
-canvas.addEventListener("pointermove", penMove);
-canvas.addEventListener("pointerup", penUp);
-canvas.addEventListener("pointercancel", penUp);
-canvas.addEventListener("contextmenu", (e) => e.preventDefault());
-
-// Typing is the same act with a different hand. There is no backspace: a
-// letter cannot be taken back, only outlasted.
-let caretX = 0, caretY = 0;
-
-function typeSize() {
-  return Math.max(26, Math.min(54, W / 16));
-}
-
-function typeFont() {
-  return `italic ${typeSize()}px "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif`;
-}
-
-window.addEventListener("keydown", (e) => {
-  if (e.ctrlKey || e.metaKey || e.altKey) return;
-  if (e.key.length !== 1 && e.key !== "Enter") return;
-  const t = performance.now();
-  const size = typeSize();
-  const margin = Math.max(28, W * 0.12);
-  if (!letters.length) {
-    caretX = margin;
-    caretY = H * 0.42;
+  function leave() {
+    if (s.away == null) { s.away = Date.now(); save(); }
   }
-  if (e.key === "Enter") {
-    caretX = margin;
-    caretY += size * 1.35;
-    e.preventDefault();
-    return;
+  function comeBack() {
+    if (s.away == null) return;
+    const now = Date.now();
+    const before = s.serving;
+    s.serving = servingAt(now);
+    if (s.serving >= s.ticket) {
+      // it was called while you were gone
+      s.missed.push({ n: s.ticket, at: s.away + (s.ticket - before) * STEP });
+      if (s.missed.length > 40) s.missed = s.missed.slice(-40);
+      s.ticket = s.serving + 4 + Math.min(s.missed.length, 12); // the room has filled up
+      s.issued = now;
+    }
+    s.away = null;
+    save();
   }
-  ctx.font = typeFont();
-  const adv = ctx.measureText(e.key).width;
-  if (caretX + adv > W - margin) {
-    caretX = margin;
-    caretY += size * 1.35;
-  }
-  if (caretY > H - size) caretY = H * 0.42;
-  if (e.key !== " ") {
-    letters.push({
-      ch: e.key, x: caretX, y: caretY + (Math.random() - 0.5) * size * 0.07, t,
-      tilt: (Math.random() - 0.5) * 0.05,
+
+  // ---- seven-segment digits ---------------------------------------------
+  const NS = "http://www.w3.org/2000/svg";
+  const H = (c) => `10,${c} 15,${c - 5} 45,${c - 5} 50,${c} 45,${c + 5} 15,${c + 5}`;
+  const V = (x, a, b) => `${x},${a} ${x + 5},${a + 5} ${x + 5},${b - 5} ${x},${b} ${x - 5},${b - 5} ${x - 5},${a + 5}`;
+  const SEG = [H(8), V(52, 10, 48), V(52, 52, 90), H(92), V(8, 52, 90), V(8, 10, 48), H(50)]; // a b c d e f g
+  const MAP = ["1111110", "0110000", "1101101", "1111001", "0110011", "1011011", "1011111", "1110000", "1111111", "1111011"];
+  const cells = [];
+  for (let i = 0; i < 3; i++) {
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 60 100");
+    const polys = SEG.map((p) => {
+      const el = document.createElementNS(NS, "polygon");
+      el.setAttribute("points", p);
+      svg.appendChild(el);
+      return el;
     });
-    mark(t);
-  }
-  caretX += adv + size * 0.02;
-  e.preventDefault();
-});
-
-// ---- drawing -------------------------------------------------------------
-
-function alphaAt(age) {
-  if (age >= NOW) return 0;
-  const left = NOW - age;
-  return left > GOING ? 1 : left / GOING;
-}
-
-function draw(now) {
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, W, H);
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.strokeStyle = "#231c2b";
-  ctx.fillStyle = "#231c2b";
-
-  for (const s of strokes) {
-    if (s.length === 1) {
-      const p = s[0];
-      const a = alphaAt(now - p.t);
-      if (a <= 0) continue;
-      ctx.globalAlpha = a * 0.9;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.w * 0.6, 0, Math.PI * 2);
-      ctx.fill();
-      continue;
-    }
-    // Smoothed through the midpoints, one short curve per point so that each
-    // can have its own weight and its own age.
-    for (let i = 1; i < s.length; i++) {
-      const p0 = s[i - 1], p1 = s[i];
-      const a = alphaAt(now - p0.t);
-      if (a <= 0) continue;
-      const pp = s[i - 2] || p0;
-      const ax = i === 1 ? p0.x : (pp.x + p0.x) / 2;
-      const ay = i === 1 ? p0.y : (pp.y + p0.y) / 2;
-      const last = i === s.length - 1;
-      const bx = last ? p1.x : (p0.x + p1.x) / 2;
-      const by = last ? p1.y : (p0.y + p1.y) / 2;
-      ctx.globalAlpha = a * 0.9;
-      ctx.lineWidth = p1.w * (0.6 + 0.4 * a);
-      ctx.beginPath();
-      ctx.moveTo(ax, ay);
-      ctx.quadraticCurveTo(p0.x, p0.y, bx, by);
-      ctx.stroke();
-    }
+    $("digits").appendChild(svg);
+    cells.push(polys);
   }
 
-  if (letters.length) {
-    ctx.font = typeFont();
-    ctx.textBaseline = "alphabetic";
-    for (const l of letters) {
-      const a = alphaAt(now - l.t);
-      if (a <= 0) continue;
-      ctx.globalAlpha = a * 0.9;
-      ctx.setTransform(dpr, 0, 0, dpr, l.x * dpr, l.y * dpr);
-      ctx.rotate(l.tilt);
-      ctx.fillText(l.ch, 0, 0);
-    }
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // ---- drawing -----------------------------------------------------------
+  function render() {
+    const shown = pad(s.serving);
+    cells.forEach((polys, i) => {
+      const bits = MAP[+shown[i]];
+      polys.forEach((p, j) => p.classList.toggle("on", bits[j] === "1"));
+    });
+    $("sign").setAttribute("aria-label", "Now serving " + shown);
+    $("mine").textContent = pad(s.ticket);
+    $("issued").textContent = "Issued " + hhmm(s.issued);
+
+    const last = s.missed[s.missed.length - 1];
+    const ns = $("noshow");
+    ns.hidden = !last;
+    if (last) ns.textContent = pad(last.n) + " called " + hhmm(last.at) + " — no answer";
+
+    // the tickets you have already held, fanned out behind the live one
+    const voids = $("voids");
+    voids.textContent = "";
+    s.missed.slice(-3).forEach((m, i, a) => {
+      const d = document.createElement("div");
+      d.className = "void";
+      const k = a.length - i; // oldest furthest out
+      d.style.transform = `rotate(${-3 + k * 5}deg) translate(${k * 5}%, ${-k * 1.2}vh)`;
+      const sp = document.createElement("span");
+      sp.textContent = pad(m.n);
+      d.appendChild(sp);
+      voids.appendChild(d);
+    });
   }
-  ctx.globalAlpha = 1;
-}
 
-function forget(now) {
-  for (const s of strokes) {
-    // keep one expired point as the start of the oldest living segment
-    let k = 0;
-    while (k < s.length - 1 && now - s[k + 1].t >= NOW) k++;
-    if (k) s.splice(0, k);
+  // ---- the clock: the only thing that moves while you watch --------------
+  const ticks = $("ticks");
+  for (let i = 0; i < 12; i++) {
+    const l = document.createElementNS(NS, "line");
+    l.setAttribute("x1", 0); l.setAttribute("x2", 0);
+    l.setAttribute("y1", -42); l.setAttribute("y2", i % 3 ? -38 : -34);
+    l.setAttribute("transform", `rotate(${i * 30})`);
+    ticks.appendChild(l);
   }
-  strokes = strokes.filter((s) => {
-    if (now - s[s.length - 1].t < NOW) return true;
-    for (const held of pens.values()) if (held === s) return true;   // pen resting on the paper
-    return false;
-  });
-  letters = letters.filter((l) => now - l.t < NOW);
-}
-
-// ---- the one line of type -------------------------------------------------
-
-const after = [
-  "you never saw all of it at once",
-  "this is about how wide now is",
-  "everything longer than this is memory",
-];
-const fitted = [
-  "that fitted. write all of it",
-  "anything that short, you can have whole",
-];
-let longs = 0, shorts = 0, sayTimer = 0;
-
-function speak(text, delay) {
-  clearTimeout(sayTimer);
-  sayTimer = setTimeout(() => {
-    say.textContent = text;
-    say.classList.remove("away");
-  }, delay);
-}
-
-function emptied() {
-  active = false;
-  attempts++;
-  const span = last - began;
-  if (span < 600) {
-    speak("write your name", 500);                       // a dot is not an attempt
-  } else if (span < NOW - 200) {
-    speak(fitted[shorts++ % fitted.length], 700);
-  } else {
-    const line = after[longs++ % after.length];
-    speak(line, 900);
-    // and after a while, ask again
-    const mine = attempts;
-    setTimeout(() => {
-      if (!active && attempts === mine) {
-        say.classList.add("away");
-        speak("write your name", 1400);
-      }
-    }, 9000);
+  function clock() {
+    const d = new Date();
+    const sec = d.getSeconds(), min = d.getMinutes() + sec / 60, hr = (d.getHours() % 12) + min / 60;
+    $("sh").setAttribute("transform", `rotate(${sec * 6})`);
+    $("mh").setAttribute("transform", `rotate(${min * 6})`);
+    $("hh").setAttribute("transform", `rotate(${hr * 30})`);
   }
-}
 
-// ---- the clock -------------------------------------------------------------
-
-let running = false;
-
-function wake() {
-  if (running) return;
-  running = true;
-  requestAnimationFrame(tick);
-}
-
-function tick(now) {
-  forget(now);
-  draw(now);
-  if (strokes.length || letters.length) {
-    requestAnimationFrame(tick);
-  } else {
-    running = false;
-    if (active) emptied();
+  // ---- watching and not watching ----------------------------------------
+  let titleTimer = 0;
+  function away() {
+    leave();
+    // the tab's label is the one place the truth shows while you are elsewhere
+    const tell = () => { document.title = "Now serving " + pad(servingAt(Date.now())); };
+    tell();
+    clearInterval(titleTimer);
+    titleTimer = setInterval(tell, 1000);
   }
-}
+  function here() {
+    clearInterval(titleTimer);
+    document.title = TITLE;
+    comeBack();
+    render();
+  }
+  document.addEventListener("visibilitychange", () => (document.hidden ? away() : here()));
+  window.addEventListener("pagehide", leave);
+  window.addEventListener("pageshow", () => { if (!document.hidden) here(); });
 
-window.addEventListener("resize", resize);
-document.addEventListener("visibilitychange", () => {
-  // time went on while the page was not looked at; so did the ink
-  if (!document.hidden && (strokes.length || letters.length)) wake();
-});
-if (calm.addEventListener) calm.addEventListener("change", () => draw(performance.now()));
-
-resize();
+  if (document.hidden) away(); else { comeBack(); save(); }
+  render();
+  clock();
+  setInterval(clock, 1000);
+})();

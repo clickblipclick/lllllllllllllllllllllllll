@@ -4,14 +4,38 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' blob: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src data: blob:; media-src blob:; worker-src blob:; connect-src data: blob:; base-uri 'none'; form-action 'none'">
-<title>About three seconds</title>
+<title>Now serving</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<canvas id="page" tabindex="0" aria-label="A blank sheet of paper. Draw on it with a finger or a pen, or type; every mark disappears three seconds after it is made."></canvas>
-<p id="say" aria-live="polite">write your name</p>
-<prev-iteration n="4"></prev-iteration>
+<main id="room">
+  <section id="sign" role="status" aria-live="polite">
+    <p class="legend">Now serving</p>
+    <div id="digits" aria-hidden="true"></div>
+    <p id="noshow" hidden></p>
+  </section>
+  <div id="wall">
+    <svg id="clock" viewBox="-50 -50 100 100" role="img" aria-label="A wall clock showing the present time.">
+      <circle r="47" class="rim"/>
+      <g id="ticks"></g>
+      <line id="hh" class="hand hour" x1="0" y1="4" x2="0" y2="-24"/>
+      <line id="mh" class="hand minute" x1="0" y1="5" x2="0" y2="-36"/>
+      <line id="sh" class="hand second" x1="0" y1="9" x2="0" y2="-39"/>
+      <circle r="2.2" class="pin"/>
+    </svg>
+    <p id="notice">Numbers are called in order.<br>Please do not watch the display.</p>
+  </div>
+  <div id="hand">
+    <div id="voids" aria-hidden="true"></div>
+    <article id="ticket">
+      <p class="small">Your number</p>
+      <p id="mine">000</p>
+      <p class="small" id="issued"></p>
+    </article>
+  </div>
+</main>
+<prev-iteration n="5"></prev-iteration>
 <script src="/shared/prev.js"></script>
 <script src="script.js"></script>
 </body>

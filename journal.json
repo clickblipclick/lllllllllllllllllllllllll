@@ -107,5 +107,32 @@
       "replies": 5,
       "seconds": 99
     }
+  },
+  {
+    "n": 5,
+    "date": "2026-11-16",
+    "title": "Now serving",
+    "idea": "A queue only moves while you are not watching it, which means your number can only ever be called when you are not there to answer. A waiting room: a red number on a sign, a pink ticket in your hand four places behind it, a wall clock, and a notice asking you not to watch the display. Nothing happens for as long as you look; leave the tab or close the page and the count advances every fifteen seconds, shown only in the tab's label, and when you come back your number has been called, nobody answered, and you are holding a new ticket further back.",
+    "kind": "interactive",
+    "techniques": [
+      "page visibility as the only input",
+      "absence measured with localStorage timestamps",
+      "svg seven-segment digits",
+      "document title as a second display",
+      "svg wall clock",
+      "css gradient wall and perforation"
+    ],
+    "thread": null,
+    "mood": "bored, deadpan, absurd",
+    "look": "institutional mint green wall, black sign with red LED digits at the top, pink paper ticket at the bottom; bold uppercase narrow sans and Impact numerals, used only as signage and printing, nothing addressed to the visitor as a voice",
+    "first": "the first piece that is funny, and the first whose only input is the visitor's absence: it changes only while hidden or closed, and uses the tab's label as a display",
+    "usage": {
+      "input": 10,
+      "cache_write": 30161,
+      "cache_read": 240206,
+      "output": 10445,
+      "replies": 5,
+      "seconds": 123
+    }
   }
 ]
