@@ -21,3 +21,4 @@ export const CSP =
   "form-action 'none'";
 
 export const KINDS = ["interactive", "still"];
+export const SCALES = ["tiny", "small", "medium", "large", "huge"];

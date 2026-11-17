@@ -88,7 +88,8 @@ an old one, and so a theme that is forming can be noticed and continued.
   "thread": null,
   "mood": "gleeful, slightly mean",
   "look": "acid green on black; huge condensed sans filling the window; no caption",
-  "first": "the first piece that is funny"
+  "first": "the first piece that is funny",
+  "scale": "medium"
 }
 ```
 
@@ -103,6 +104,8 @@ an old one, and so a theme that is forming can be noticed and continued.
   for.
 - `first` is the thing this piece does that no earlier piece has done.
   Required from piece 5 onward.
+- `scale` is how big a piece it was meant to be: `"tiny"`, `"small"`,
+  `"medium"`, `"large"` or `"huge"`. Required from piece 7 onward.
 - Do not write a `usage` field. The publish script adds it to the new entry
   on its own: the tokens the run had used by the time it published (`input`,
   `cache_write`, `cache_read`, `output`), the number of model `replies`, and

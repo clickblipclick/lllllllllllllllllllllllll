@@ -11,7 +11,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import { ROOT, FILES, KINDS } from "./rules.mjs";
+import { ROOT, FILES, KINDS, SCALES } from "./rules.mjs";
 import { check } from "./check.mjs";
 import { sessionUsage } from "./usage.mjs";
 
@@ -45,6 +45,9 @@ function readJournal() {
     if (!str(e?.mood)) problems.push(`${at}: "mood" is required`);
     if (!str(e?.look)) problems.push(`${at}: "look" is required (palette, typeface, where the text sits)`);
     if (i >= 5 && !str(e?.first)) problems.push(`${at}: "first" is required (what this piece does that no earlier piece has)`);
+    if (i >= 7 ? !SCALES.includes(e?.scale) : !(e?.scale === undefined || SCALES.includes(e.scale))) {
+      problems.push(`${at}: "scale" must be one of ${SCALES.join(", ")}`);
+    }
     if (!(e?.usage === undefined || (e.usage && typeof e.usage === "object"))) problems.push(`${at}: "usage" is filled in by this script; leave it out`);
     if (!fs.existsSync(path.join(ROOT, String(i), "index.html"))) problems.push(`${at}: folder /${i}/ is missing`);
   });
