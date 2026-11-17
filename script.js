@@ -1,140 +1,163 @@
-// Now serving.
-// A queue that only moves while nobody is watching it. The number on the sign
-// advances one place for every STEP of time this page spends hidden or closed,
-// and never while it is visible. So your number can only be called when you
-// are not here to answer it.
+// Still.
+// A black square that is wiped out and painted again on every frame the
+// screen shows, and a count of how many times that has happened. Nothing in
+// the picture changes except the count.
+
 (() => {
-  const STEP = 15000; // one number per fifteen seconds unwatched
-  const KEY = "l25.5.queue";
-  const TITLE = document.title;
-  const $ = (id) => document.getElementById(id);
-  const pad = (n) => String(n % 1000).padStart(3, "0");
-  const hhmm = (t) => {
-    const d = new Date(t);
-    return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
-  };
+  const canvas = document.getElementById("wall");
+  const ctx = canvas.getContext("2d", { alpha: false });
+  const label = document.getElementById("label");
+  const rateEl = document.getElementById("rate");
+  const awayEl = document.getElementById("away");
+  const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-  // ---- state -------------------------------------------------------------
-  let s = null;
-  try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* no memory */ }
-  if (!s || typeof s.serving !== "number" || typeof s.ticket !== "number") {
-    const serving = 23 + Math.floor(Math.random() * 40);
-    s = { serving, ticket: serving + 4, issued: Date.now(), away: null, missed: [] };
-  }
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* fine */ } };
+  const FONT = '200 100px "Helvetica Neue", Helvetica, Arial, sans-serif';
+  const PALE = "#dcdcdc";
 
-  // where the sign would be if it had been advancing since s.away
-  const servingAt = (now) => s.away == null ? s.serving : s.serving + Math.max(0, Math.floor((now - s.away) / STEP));
+  let W = 0, H = 0, dpr = 1;
+  let layout = null;
 
-  function leave() {
-    if (s.away == null) { s.away = Date.now(); save(); }
-  }
-  function comeBack() {
-    if (s.away == null) return;
-    const now = Date.now();
-    const before = s.serving;
-    s.serving = servingAt(now);
-    if (s.serving >= s.ticket) {
-      // it was called while you were gone
-      s.missed.push({ n: s.ticket, at: s.away + (s.ticket - before) * STEP });
-      if (s.missed.length > 40) s.missed = s.missed.slice(-40);
-      s.ticket = s.serving + 4 + Math.min(s.missed.length, 12); // the room has filled up
-      s.issued = now;
+  let made = 0;          // how many times the square has been painted
+  let shown = 0;         // the figure on the wall (lags when motion is reduced)
+  let shownAt = 0;
+  let places = 7;
+
+  let tickFrames = 0;
+  let tickStart = 0;
+
+  let hiddenAt = 0;
+  let awayMs = 0;
+
+  function measure() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = Math.max(1, window.innerWidth);
+    H = Math.max(1, window.innerHeight);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+
+    const upright = H > W * 1.1;
+
+    // The band the figure runs along. On a tall window it runs downward,
+    // starting below the wall label.
+    let x0 = 0, y0 = 0, x1 = W, y1 = H;
+    if (upright) {
+      const r = label.getBoundingClientRect();
+      y0 = Math.min(H * 0.4, r.bottom + 18);
+      y1 = H - 14;
     }
-    s.away = null;
-    save();
+    const along = upright ? y1 - y0 : x1 - x0;
+    const across = upright ? x1 - x0 : y1 - y0;
+    const cell = along / places;
+
+    ctx.font = FONT;
+    const m = ctx.measureText("0");
+    const gw = m.width / 100;
+    const gh = ((m.actualBoundingBoxAscent || 72) + (m.actualBoundingBoxDescent || 0)) / 100;
+    let size = (cell * 0.94) / gw;
+    size = Math.min(size, (across * 0.8) / gh);
+
+    const cx = Math.round((x0 + x1) / 2);
+    const cy = Math.round((y0 + y1) / 2);
+    const side = Math.round(Math.min(across * 0.44, along * 0.34));
+
+    layout = {
+      upright, cell, size, cx, cy, side,
+      start: (upright ? y0 : x0) + cell / 2,
+      rise: (gh * size) / 2,
+    };
   }
 
-  // ---- seven-segment digits ---------------------------------------------
-  const NS = "http://www.w3.org/2000/svg";
-  const H = (c) => `10,${c} 15,${c - 5} 45,${c - 5} 50,${c} 45,${c + 5} 15,${c + 5}`;
-  const V = (x, a, b) => `${x},${a} ${x + 5},${a + 5} ${x + 5},${b - 5} ${x},${b} ${x - 5},${b - 5} ${x - 5},${a + 5}`;
-  const SEG = [H(8), V(52, 10, 48), V(52, 52, 90), H(92), V(8, 52, 90), V(8, 10, 48), H(50)]; // a b c d e f g
-  const MAP = ["1111110", "0110000", "1101101", "1111001", "0110011", "1011011", "1011111", "1110000", "1111111", "1111011"];
-  const cells = [];
-  for (let i = 0; i < 3; i++) {
-    const svg = document.createElementNS(NS, "svg");
-    svg.setAttribute("viewBox", "0 0 60 100");
-    const polys = SEG.map((p) => {
-      const el = document.createElementNS(NS, "polygon");
-      el.setAttribute("points", p);
-      svg.appendChild(el);
-      return el;
-    });
-    $("digits").appendChild(svg);
-    cells.push(polys);
+  function paint() {
+    const L = layout;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Destroy everything.
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, W, H);
+
+    // The figure.
+    const text = String(shown).padStart(places, "0");
+    const lead = text.length - String(shown).length;
+    ctx.font = FONT.replace("100px", L.size.toFixed(2) + "px");
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    for (let i = 0; i < text.length; i++) {
+      const p = L.start + i * L.cell;
+      ctx.fillStyle = i < lead ? PALE : "#000";
+      if (L.upright) {
+        ctx.save();
+        ctx.translate(L.cx, p);
+        ctx.rotate(Math.PI / 2);
+        ctx.fillText(text[i], 0, L.rise);
+        ctx.restore();
+      } else {
+        ctx.fillText(text[i], p, L.cy + L.rise);
+      }
+    }
+
+    // Make the square again, exactly where it was. It turns over whatever
+    // it lands on, so the figure reads white inside it.
+    ctx.globalCompositeOperation = "difference";
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(L.cx - L.side / 2, L.cy - L.side / 2, L.side, L.side);
+    ctx.globalCompositeOperation = "source-over";
   }
 
-  // ---- drawing -----------------------------------------------------------
-  function render() {
-    const shown = pad(s.serving);
-    cells.forEach((polys, i) => {
-      const bits = MAP[+shown[i]];
-      polys.forEach((p, j) => p.classList.toggle("on", bits[j] === "1"));
-    });
-    $("sign").setAttribute("aria-label", "Now serving " + shown);
-    $("mine").textContent = pad(s.ticket);
-    $("issued").textContent = "Issued " + hhmm(s.issued);
-
-    const last = s.missed[s.missed.length - 1];
-    const ns = $("noshow");
-    ns.hidden = !last;
-    if (last) ns.textContent = pad(last.n) + " called " + hhmm(last.at) + " — no answer";
-
-    // the tickets you have already held, fanned out behind the live one
-    const voids = $("voids");
-    voids.textContent = "";
-    s.missed.slice(-3).forEach((m, i, a) => {
-      const d = document.createElement("div");
-      d.className = "void";
-      const k = a.length - i; // oldest furthest out
-      d.style.transform = `rotate(${-3 + k * 5}deg) translate(${k * 5}%, ${-k * 1.2}vh)`;
-      const sp = document.createElement("span");
-      sp.textContent = pad(m.n);
-      d.appendChild(sp);
-      voids.appendChild(d);
-    });
+  function words(n) {
+    return n.toLocaleString("en-GB");
   }
 
-  // ---- the clock: the only thing that moves while you watch --------------
-  const ticks = $("ticks");
-  for (let i = 0; i < 12; i++) {
-    const l = document.createElementNS(NS, "line");
-    l.setAttribute("x1", 0); l.setAttribute("x2", 0);
-    l.setAttribute("y1", -42); l.setAttribute("y2", i % 3 ? -38 : -34);
-    l.setAttribute("transform", `rotate(${i * 30})`);
-    ticks.appendChild(l);
-  }
-  function clock() {
-    const d = new Date();
-    const sec = d.getSeconds(), min = d.getMinutes() + sec / 60, hr = (d.getHours() % 12) + min / 60;
-    $("sh").setAttribute("transform", `rotate(${sec * 6})`);
-    $("mh").setAttribute("transform", `rotate(${min * 6})`);
-    $("hh").setAttribute("transform", `rotate(${hr * 30})`);
+  function frame(now) {
+    made++;
+    if (String(made).length > places) {
+      places = String(made).length;
+      measure();
+    }
+
+    // With reduced motion the square is still remade every frame, because
+    // that is not a choice the page has; only the figure is held, and let go
+    // once a second.
+    if (!calm.matches || now - shownAt >= 1000 || made === 1) {
+      shown = made;
+      shownAt = now;
+    }
+
+    paint();
+
+    tickFrames++;
+    if (!tickStart) tickStart = now;
+    const span = now - tickStart;
+    if (span >= 1000) {
+      const rate = Math.round((tickFrames * 1000) / span);
+      rateEl.textContent = "about " + words(rate);
+      tickFrames = 0;
+      tickStart = now;
+    }
+
+    requestAnimationFrame(frame);
   }
 
-  // ---- watching and not watching ----------------------------------------
-  let titleTimer = 0;
-  function away() {
-    leave();
-    // the tab's label is the one place the truth shows while you are elsewhere
-    const tell = () => { document.title = "Now serving " + pad(servingAt(Date.now())); };
-    tell();
-    clearInterval(titleTimer);
-    titleTimer = setInterval(tell, 1000);
-  }
-  function here() {
-    clearInterval(titleTimer);
-    document.title = TITLE;
-    comeBack();
-    render();
-  }
-  document.addEventListener("visibilitychange", () => (document.hidden ? away() : here()));
-  window.addEventListener("pagehide", leave);
-  window.addEventListener("pageshow", () => { if (!document.hidden) here(); });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      hiddenAt = Date.now();
+    } else if (hiddenAt) {
+      awayMs += Date.now() - hiddenAt;
+      hiddenAt = 0;
+      tickFrames = 0;
+      tickStart = 0;
+      const s = Math.round(awayMs / 1000);
+      if (s >= 1) {
+        awayEl.hidden = false;
+        awayEl.textContent =
+          "For the " + words(s) + (s === 1 ? " second" : " seconds") +
+          " you were not looking, it was not made at all.";
+        measure();
+      }
+    }
+  });
 
-  if (document.hidden) away(); else { comeBack(); save(); }
-  render();
-  clock();
-  setInterval(clock, 1000);
+  window.addEventListener("resize", measure);
+  measure();
+  requestAnimationFrame(frame);
 })();

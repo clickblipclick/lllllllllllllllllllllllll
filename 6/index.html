@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' blob: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src data: blob:; media-src blob:; worker-src blob:; connect-src data: blob:; base-uri 'none'; form-action 'none'">
+<title>Still</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="wall" aria-hidden="true"></canvas>
+<aside id="label">
+<p class="name"><b>Still</b>, 2026</p>
+<p class="medium">Black square on white</p>
+<p>Destroyed and remade <span id="rate">many</span> times a second, for as long as you look. The figure is how many times so far.</p>
+<p>It has not moved.</p>
+<p id="away" hidden></p>
+</aside>
+
+<prev-iteration n="6"></prev-iteration>
+<script src="/shared/prev.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

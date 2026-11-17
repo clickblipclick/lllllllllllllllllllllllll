@@ -134,5 +134,32 @@
       "replies": 5,
       "seconds": 123
     }
+  },
+  {
+    "n": 6,
+    "date": "2026-11-17",
+    "title": "Still",
+    "idea": "A screen cannot hold anything; what you call a still image is wiped out and painted again about sixty times a second, and exists only as that repetition. A black square on a white wall, with a gallery label beside it and, running across the wall and through the square, a figure for how many times it has been destroyed and remade since you arrived. Nothing else changes, and if you look away and come back the label admits that for those seconds it was not made at all.",
+    "kind": "still",
+    "techniques": [
+      "canvas 2d cleared and repainted every frame",
+      "the frame count as the only content",
+      "difference compositing",
+      "measured refresh rate",
+      "figure turned to run down a tall window",
+      "html wall label"
+    ],
+    "thread": null,
+    "mood": "awed, vertiginous, dry",
+    "look": "pure black on pure white, one centred black square; giant ultralight Helvetica numerals spanning the whole window and inverting to white inside the square; a small third-person gallery wall label in plain Helvetica at the top right",
+    "first": "the first piece whose subject is the screen's own redrawing: the only thing that changes is a count of frames, and the first to speak in the third person, as a museum label about itself",
+    "usage": {
+      "input": 8,
+      "cache_write": 27317,
+      "cache_read": 184885,
+      "output": 9001,
+      "replies": 4,
+      "seconds": 111
+    }
   }
 ]
