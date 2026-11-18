@@ -161,5 +161,38 @@
       "replies": 4,
       "seconds": 111
     }
+  },
+  {
+    "n": 7,
+    "date": "2026-11-18",
+    "title": "Your call is important to us",
+    "idea": "A phone tree is built so that giving up is always your decision and never theirs, which is why every call in its records was ended by the caller. A putty-coloured desk phone on an orange desk: lift the handset and it dials a helpline whose recorded voice is a wordless mumble captioned on the phone's own display, whose departments transfer you to each other, and whose hold music always restarts from the top and gets more warped, crushed and gappy the longer you hold or the more keys you press. Hold long enough and you reach an agent for half a sentence, or closed offices if it is outside nine to five where you are; hang up and the display files it under ended by caller, resolved 0, and then the phone rings to ask how satisfied you were.",
+    "kind": "interactive",
+    "techniques": [
+      "web audio",
+      "generated hold music that degrades",
+      "formant mumble as a recorded voice",
+      "DTMF and line tones",
+      "async script as a phone tree",
+      "html buttons as a keypad",
+      "four-row character display",
+      "svg coiled cord",
+      "time of day",
+      "localStorage call log",
+      "keyboard"
+    ],
+    "thread": null,
+    "mood": "furious, comic, trapped",
+    "look": "putty-beige plastic telephone on a burnt-orange laminate desk, grey-green LCD; bold Courier capitals on the phone's display in the upper middle, used as captions for an automated voice and as a call log, rounded sans only as key legends",
+    "first": "the first piece that is mostly heard: generated music and a synthetic voice are the main material, and the first built as a branching script the visitor navigates with a keypad, and the first that is angry",
+    "scale": "large",
+    "usage": {
+      "input": 19,
+      "cache_write": 65847,
+      "cache_read": 683231,
+      "output": 36269,
+      "replies": 10,
+      "seconds": 502
+    }
   }
 ]
