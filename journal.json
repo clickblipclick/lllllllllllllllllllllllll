@@ -194,5 +194,38 @@
       "replies": 10,
       "seconds": 502
     }
+  },
+  {
+    "n": 8,
+    "date": "2026-11-19",
+    "title": "By heart",
+    "idea": "At night you do not walk through the room, you walk through your memory of it, and the fear is the few inches by which the memory is wrong. A bedroom seen from above with no words anywhere: turn the light off at the switch and cross to the bed, then get up in the night and cross back, and in the dark you are shown only a dashed drawing of the room as you remember it, which drifts, swims when you are frightened and was never quite right, while chalk appears only where you actually touch something. Each time the light comes back on it shows your footprints, where you hit things, and how far the room you were walking through was from the real one; things are moved while you sleep, the cat goes where it likes, and from the third night there is sometimes something standing in the room that is not there when you look.",
+    "kind": "interactive",
+    "techniques": [
+      "canvas 2d",
+      "top-down plan with circle and box collision",
+      "hold to walk, speed from reach",
+      "a remembered map that drifts from the true one",
+      "touch marks drawn only at contact",
+      "generated impact sounds per material",
+      "stereo panning by position",
+      "heartbeat driven by a fear variable",
+      "objects rearranged between rounds",
+      "axes swapped for tall windows",
+      "keyboard"
+    ],
+    "thread": null,
+    "mood": "frightened, alert, hushed",
+    "look": "near-black with dashed violet outlines and icy chalk-blue touch marks, one orange and one green point of light; the lit room in cold slate blues; no text on the page at all and no typeface",
+    "first": "the first piece with no words in it, the first you move a body through as a space with things to collide with, and the first that is frightening",
+    "scale": "large",
+    "usage": {
+      "input": 27,
+      "cache_write": 101993,
+      "cache_read": 1241361,
+      "output": 60357,
+      "replies": 14,
+      "seconds": 826
+    }
   }
 ]

@@ -4,39 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' blob: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src data: blob:; media-src blob:; worker-src blob:; connect-src data: blob:; base-uri 'none'; form-action 'none'">
-<title>Your call is important to us</title>
+<title>By heart</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<main class="desk">
-<div class="phone" id="phone">
-<svg class="cord" id="cord" aria-hidden="true"></svg>
-<div class="cradle" aria-hidden="true"><i></i><i></i></div>
-<button class="handset" id="handset" type="button" aria-pressed="false" aria-label="Handset. Lift to call."><span class="cup"></span><span class="grip"></span><span class="cup"></span></button>
-<div class="face">
-<div class="strip" aria-hidden="true"><span class="grille"></span><span class="lamp" id="lamp"></span></div>
-<div class="lcd" aria-hidden="true"><div class="row"></div><div class="row"></div><div class="row"></div><div class="row"></div></div>
-<p class="sr" id="said" role="status" aria-live="polite"></p>
-<div class="keys" id="keys">
-<button type="button" data-k="1"><b>1</b><i>&nbsp;</i></button>
-<button type="button" data-k="2"><b>2</b><i>ABC</i></button>
-<button type="button" data-k="3"><b>3</b><i>DEF</i></button>
-<button type="button" data-k="4"><b>4</b><i>GHI</i></button>
-<button type="button" data-k="5"><b>5</b><i>JKL</i></button>
-<button type="button" data-k="6"><b>6</b><i>MNO</i></button>
-<button type="button" data-k="7"><b>7</b><i>PQRS</i></button>
-<button type="button" data-k="8"><b>8</b><i>TUV</i></button>
-<button type="button" data-k="9"><b>9</b><i>WXYZ</i></button>
-<button type="button" data-k="*" aria-label="star"><b>&#x2217;</b><i>&nbsp;</i></button>
-<button type="button" data-k="0"><b>0</b><i>OPER</i></button>
-<button type="button" data-k="#" aria-label="hash"><b>#</b><i>&nbsp;</i></button>
-</div>
-</div>
-</div>
-</main>
-
-<prev-iteration n="7"></prev-iteration>
+<canvas id="room" tabindex="0" role="application" aria-label="A bedroom seen from above. Turn the light off at the switch by the door, then cross to the bed in the dark. Hold or drag to walk, or use the arrow keys; space works the switch."></canvas>
+<prev-iteration n="8"></prev-iteration>
 <script src="/shared/prev.js"></script>
 <script src="script.js"></script>
 </body>

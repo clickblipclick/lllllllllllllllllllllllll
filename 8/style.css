@@ -1,0 +1,24 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #04060a;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+#room {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  outline: none;
+  cursor: crosshair;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#room.at-switch { cursor: pointer; }
+#room.dark { cursor: none; }
