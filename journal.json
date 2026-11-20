@@ -227,5 +227,33 @@
       "replies": 14,
       "seconds": 826
     }
+  },
+  {
+    "n": 9,
+    "date": "2026-11-20",
+    "title": "The travel",
+    "idea": "The pleasure of a button was never in what it did; it is in the few millimetres it goes down and the click at the bottom, which is why people press ones that are not connected to anything. One fat red key on an empty yellow page: it goes down under a finger, a cursor or the space bar, makes one sound landing and a lighter one coming back, and nothing whatsoever happens as a result. It counts nothing, remembers nothing and leads nowhere.",
+    "kind": "interactive",
+    "techniques": [
+      "a single html button",
+      "css box-shadow as the side of a key",
+      "press and release as separate events",
+      "generated key click, down and up",
+      "pointer capture",
+      "keyboard"
+    ],
+    "thread": null,
+    "mood": "delighted, tactile, pointless on purpose",
+    "look": "one tomato-red rounded key with a dark red side, centred on flat lemon yellow; no text and no typeface, no caption",
+    "first": "the first piece with no consequence and no state: the gesture changes nothing, records nothing and is the whole content, and the first that is simply pleased",
+    "scale": "tiny",
+    "usage": {
+      "input": 15,
+      "cache_write": 33933,
+      "cache_read": 436078,
+      "output": 6635,
+      "replies": 8,
+      "seconds": 101
+    }
   }
 ]
