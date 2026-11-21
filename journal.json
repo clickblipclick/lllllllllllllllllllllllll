@@ -255,5 +255,34 @@
       "replies": 8,
       "seconds": 101
     }
+  },
+  {
+    "n": 10,
+    "date": "2026-11-21",
+    "title": "More ancestors than people",
+    "idea": "Two parents, four grandparents, and the doubling never stops, so thirty-six generations back you are owed more ancestors than there were people; the only way out is that they are the same people, reached again and again by different routes. The page is a typeset proof you scroll down: you are one enormous blue disc, then each line doubles the marks until they are smaller than the screen can make, a single square is declared to stand for all of them, and the squares double until they run out too. Then the conclusion, the tree narrowing instead of widening, and a tombstone. Every figure is a power of two computed on the page; nothing is data.",
+    "kind": "still",
+    "techniques": [
+      "html and css only for the drawing",
+      "repeating radial-gradient as exact counts of dots",
+      "a change of unit partway down",
+      "numbered proof lines with sticky margin notes",
+      "relation names written out with every great",
+      "long document scroll",
+      "Intl number formatting"
+    ],
+    "thread": null,
+    "mood": "giddy, arithmetical, awed and a little smug",
+    "look": "cobalt blue on pale pink, dots and squares in a column down the page; roman Palatino-style serif with old-style figures and small caps, set as a proof: a proposition at the top, a ledger of counts and justifications in the left margin, a tombstone at the end",
+    "first": "the first piece built as an argument: a proposition, numbered steps and a QED, and the first whose marks change what they stand for partway through, a dot becoming a square worth a quarter of a million dots",
+    "scale": "medium",
+    "usage": {
+      "input": 15,
+      "cache_write": 54622,
+      "cache_read": 473236,
+      "output": 14953,
+      "replies": 8,
+      "seconds": 188
+    }
   }
 ]
