@@ -284,5 +284,38 @@
       "replies": 8,
       "seconds": 188
     }
+  },
+  {
+    "n": 11,
+    "date": "2026-11-22",
+    "title": "Seen by Jo, Priya",
+    "idea": "No group chat ends with a goodbye; it ends with something trivial that nobody answered, and nobody knows at the time that it was the last message. The page is the chat of five invented housemates and you, played from the day it was made: bins and butter, moving out, one good night at the pub, a date nobody can do, a baby, two birthdays, and at last a question about a takeaway. You can tap replies, type your own or heart a message, and early on they pile in; later the same effort buys a promise, then a thumbs-up, then someone starting to type and stopping, and the blank wall between conversations grows with the months between them. Whatever you say after the end only makes yours the last message.",
+    "kind": "interactive",
+    "techniques": [
+      "html chat interface",
+      "scripted characters with conditional lines",
+      "free text input matched by keyword",
+      "suggested reply chips",
+      "typing indicators that give up",
+      "read receipts that shrink",
+      "tap to react",
+      "a warmth variable with falling returns",
+      "vertical space proportional to the log of elapsed days",
+      "dates computed back from the day of the first visit",
+      "localStorage transcript that ages in real time"
+    ],
+    "thread": null,
+    "mood": "sociable, fond, awkward, slowly deflating",
+    "look": "oat-coloured dotted wall, cream bubbles and pale moss for your own, dark teal header, names in terracotta, teal, plum and ochre; system sans; all text is chat bubbles in a centred phone-width column, spoken by characters to each other, with date pills and a small receipt line, no caption",
+    "first": "the first piece with characters who talk to each other and answer what the visitor writes, the first to take free typed text, and the first where silence is drawn as distance: empty scroll in proportion to the time nobody spoke",
+    "scale": "large",
+    "usage": {
+      "input": 23,
+      "cache_write": 78393,
+      "cache_read": 914103,
+      "output": 40482,
+      "replies": 12,
+      "seconds": 459
+    }
   }
 ]
