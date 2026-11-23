@@ -317,5 +317,34 @@
       "replies": 12,
       "seconds": 459
     }
+  },
+  {
+    "n": 12,
+    "date": "2026-11-23",
+    "title": "Two in a bed",
+    "idea": "Lying beside someone who is asleep, you end up breathing with them, and you never decide to; the moment you take charge of your own breath you are out of step again. Two shapes under one quilt, seen from the foot of the bed at night: the left one sleeps and breathes on its own slow clock, and the right one is yours, in for as long as you hold and out when you let go. Match them and the room darkens, the two drift closer and your own breath gets heavier; fidget and they sigh, turn and move away. Do nothing at all and your side breathes by itself and falls into step without you, which is how it actually happens.",
+    "kind": "interactive",
+    "techniques": [
+      "canvas 2d",
+      "hold to inhale, release to exhale",
+      "two coupled oscillators that pull each other into phase",
+      "a sleeper who leans toward the visitor's rhythm",
+      "filtered-noise breath, one in each ear",
+      "a drowsiness variable that dims the page and slows the controls",
+      "keyboard"
+    ],
+    "thread": null,
+    "mood": "tender, drowsy, intimate",
+    "look": "faded rust quilt with dark fold lines against deep indigo wall and headboard, pale blue-grey pillows, a slant of street light; one small word in italic script (hold, in, out) floating over the visitor's side as a label for their own breath, fading as they fall asleep",
+    "first": "the first piece whose input is the visitor's breathing rhythm, the first built on entrainment between the visitor and something with its own rhythm that also adjusts to them, and the first that completes itself best if left alone",
+    "scale": "medium",
+    "usage": {
+      "input": 12,
+      "cache_write": 47203,
+      "cache_read": 330499,
+      "output": 15896,
+      "replies": 6,
+      "seconds": 188
+    }
   }
 ]
