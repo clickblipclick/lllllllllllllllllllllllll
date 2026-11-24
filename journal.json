@@ -346,5 +346,34 @@
       "replies": 6,
       "seconds": 188
     }
+  },
+  {
+    "n": 13,
+    "date": "2026-11-24",
+    "title": "It was fine before you touched it",
+    "idea": "Nothing is level; things are only level with each other, so straightening one thing just hands the crookedness to the next thing out. A picture hangs askew on a striped wall above a shelf with a marble on it. Turn the picture level and, a breath later, a shelf bracket gives; fix the shelf and the wallpaper is plainly off; fix that and it is the whole room, and levelling the room undoes everything inside it. The picture springs back a little whenever you let go, the marble rolls to wherever down really is, the print inside the frame was mounted slightly crooked and cannot be reached, and it never stops.",
+    "kind": "interactive",
+    "techniques": [
+      "html and css only for the drawing",
+      "nested css rotations as frames of reference",
+      "drag to turn about a pivot, geared down",
+      "a picture that springs back on release",
+      "a marble rolling by the true tilt as a spirit level",
+      "an escalating sequence triggered by success",
+      "keyboard"
+    ],
+    "thread": null,
+    "mood": "fussy, itchy, compulsive, quietly comic",
+    "look": "broad duck-egg blue wallpaper stripes, a black lacquer frame with a cream mat around a flat vermilion sun over a slate sea, a birch shelf with a green glass marble, white skirting and dark floor; no text on the page and no typeface",
+    "first": "the first piece whose input is rotation, the first built from frames of reference nested inside each other so that fixing the outer one breaks the inner ones, and the first that punishes success: it only gets worse when you get it right",
+    "scale": "medium",
+    "usage": {
+      "input": 15,
+      "cache_write": 54126,
+      "cache_read": 505166,
+      "output": 20591,
+      "replies": 8,
+      "seconds": 289
+    }
   }
 ]
