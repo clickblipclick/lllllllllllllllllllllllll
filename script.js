@@ -1,148 +1,171 @@
-// It was fine before you touched it.
-// Four things that can each be turned: a picture, a shelf, the wallpaper and
-// the room that holds them all. Whenever everything is level with the window
-// for a moment, something else turns out not to be. A marble on the shelf
-// reports the truth about gravity, which is measured against the window.
+// You too
+// An embarrassment is a memory kept by exactly one person.
+// Hold still and one arrives. Flinch and the next comes sooner.
+// Sit through it and it goes, and the count at the top drops to nobody.
 (() => {
   'use strict';
-  const $ = (id) => document.getElementById(id);
-  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const TOL = 0.3;          // degrees that count as level
-  const GEAR = 0.7;         // the hand is geared down so small corrections are possible
-  const LIMIT = 9;
 
-  const mk = (id, a) => ({ el: $(id), a, shown: null, anim: null, held: false });
-  const room = mk('room', 0), paper = mk('paper', 0), shelf = mk('shelf', 0), pic = mk('pic', 2.6);
-  const skirt = $('skirt'), marble = $('marble'), swirl = marble.firstElementChild;
-  const things = [pic, shelf, paper, room];
-  pic.rest = pic.a;
+  // [what you did, years ago, how many people were there]
+  const MEMORIES = [
+    ['“Enjoy your meal.” “You too.”', 6, 3],
+    ['You waved back. They were waving at the person behind you.', 9, 14],
+    ['You called the teacher Mum.', 27, 31],
+    ['You went in for the hug. It was a handshake.', 4, 2],
+    ['You replied all.', 8, 212],
+    ['You said “love you” at the end of a work call.', 3, 7],
+    ['You held the door. They were much too far away. They had to run.', 11, 2],
+    ['You laughed before the end of the story. It was not that kind of story.', 13, 5],
+    ['You pulled the door that said push. Twice.', 2, 9],
+    ['You asked when the baby was due.', 16, 4],
+    ['You clapped. The song was not over.', 19, 600],
+    ['You were still talking when the room went quiet.', 22, 40],
+    ['You said goodbye and then walked the same way as them for four minutes.', 7, 2],
+    ['You had been saying it wrong for nine years.', 5, 11],
+    ['You told the joke again, to the same people.', 1, 6],
+    ['You sang the wrong words, loudly, with conviction.', 15, 80]
+  ];
 
-  // which angle a handle turns, and what it pivots about
-  const handles = [[pic.el, pic], [shelf.el, shelf], [paper.el, paper], [skirt, room]];
-  const pivotOf = (t) => {
-    const p = t.el.querySelector(':scope > .pivot');
-    if (!p) return { x: innerWidth / 2, y: innerHeight / 2 };
-    const r = p.getBoundingClientRect();
-    return { x: r.left, y: r.top };
-  };
-  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-  const abs = (t) => (t === room ? room.a : t.a + room.a);
+  const root = document.documentElement;
+  const blurt = document.querySelector('.blurt');
+  const room = document.querySelector('.room');
+  const lines = [...document.querySelectorAll('.ledger li')];
+  const calmMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function animate(t, to, dur, kind) {
-    t.anim = { from: t.a, to, t: 0, dur: calm ? Math.min(dur, 0.01) : dur, kind };
-  }
+  const COLD = [243, 242, 236], HOT = [255, 86, 112];
+  const T_L1 = 1300, T_L2 = 2600, T_L3 = 3900, T_FADE = 6200, T_GONE = 11200, T_DONE = 13600, GRACE = 320;
 
-  // letting go: a picture never stays quite where it was put
-  function release(t, moved) {
-    t.held = false;
-    t.el.classList.remove('held'); skirt.classList.remove('held');
-    if (!moved) return;
-    if (t === pic) {
-      const slip = (pic.a - pic.rest) * 0.07 + (Math.random() - 0.5) * 0.24;
-      pic.rest = pic.a - slip;
-      animate(pic, pic.rest, 1.5, 'swing');
-    } else if (t === shelf) {
-      animate(shelf, shelf.a + (Math.random() - 0.5) * 0.1, 0.25, 'ease');
+  let order = [], cursor = 0;
+  let state = 'calm';          // calm | showing
+  let shownAt = 0, lastInput = performance.now();
+  let idleLimit = 2400;
+  let heat = 0;                // what flinching leaves behind
+  let flush = 0, travelled = 0, lastXY = null, zeroed = false;
+  let current = null, last = performance.now();
+
+  function shuffle() {
+    order = MEMORIES.map((_, i) => i).slice(1);
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
     }
+    if (cursor === 0) order.unshift(0); else order.push(0);
   }
 
-  handles.forEach(([el, t]) => {
-    let last = null, pv = null, moved = false, id = null;
-    el.addEventListener('pointerdown', (e) => {
-      if (id !== null) return;
-      id = e.pointerId; moved = false;
-      try { el.setPointerCapture(id); } catch (_) {}
-      pv = pivotOf(t); last = { x: e.clientX - pv.x, y: e.clientY - pv.y };
-      t.held = true; t.anim = null; el.classList.add('held');
-      e.preventDefault(); e.stopPropagation();
-    });
-    el.addEventListener('pointermove', (e) => {
-      if (e.pointerId !== id) return;
-      const cur = { x: e.clientX - pv.x, y: e.clientY - pv.y };
-      const r2 = Math.max(cur.x * cur.x + cur.y * cur.y, 90 * 90);
-      const d = (last.x * cur.y - last.y * cur.x) / r2 * 180 / Math.PI;
-      if (d) { t.a = clamp(t.a + d * GEAR, -LIMIT, LIMIT); moved = true; }
-      last = cur;
-    });
-    const up = (e) => { if (e.pointerId !== id) return; id = null; release(t, moved); };
-    el.addEventListener('pointerup', up);
-    el.addEventListener('pointercancel', up);
-    el.addEventListener('keydown', (e) => {
-      const d = (e.key === 'ArrowRight' || e.key === 'ArrowDown') ? 1 : (e.key === 'ArrowLeft' || e.key === 'ArrowUp') ? -1 : 0;
-      if (!d) return;
-      e.preventDefault();
-      t.anim = null;
-      t.a = clamp(t.a + d * (e.shiftKey ? 0.5 : 0.1), -LIMIT, LIMIT);
-      if (t === pic) pic.rest = pic.a;
-    });
+  function fit() {
+    if (!current) return;
+    const w = room.clientWidth, h = room.clientHeight;
+    let lo = 14, hi = Math.max(w, h);
+    for (let i = 0; i < 14; i++) {
+      const mid = (lo + hi) / 2;
+      blurt.style.fontSize = mid + 'px';
+      if (blurt.scrollWidth <= w + 1 && blurt.offsetHeight <= h) lo = mid; else hi = mid;
+    }
+    blurt.style.fontSize = Math.floor(lo) + 'px';
+  }
+
+  function ago(y) { return y === 1 ? 'last year' : y + ' years ago'; }
+
+  function arrive(now) {
+    if (cursor % MEMORIES.length === 0) shuffle();
+    current = MEMORIES[order[cursor % MEMORIES.length]];
+    cursor++;
+    blurt.className = 'blurt';
+    blurt.style.cssText = '';
+    blurt.textContent = current[0];
+    fit();
+    void blurt.offsetWidth;
+    blurt.classList.add('slam');
+    blurt.style.opacity = 1;
+    lines.forEach(l => { l.className = ''; l.textContent = ''; });
+    lines[0].textContent = ago(current[1]);
+    lines[1].textContent = 'people who were there: ' + current[2].toLocaleString('en');
+    lines[2].textContent = 'people thinking about it right now: 1';
+    state = 'showing'; shownAt = now; travelled = 0; zeroed = false;
+  }
+
+  function flinch(now, dx, dy) {
+    if (state !== 'showing' || now - shownAt < GRACE) return;
+    const d = Math.hypot(dx, dy) || 1;
+    blurt.style.setProperty('--dx', (dx / d * 45).toFixed(1) + '%');
+    blurt.style.setProperty('--dy', (d === 1 && !dx && !dy ? 40 : dy / d * 45).toFixed(1) + '%');
+    blurt.style.setProperty('--rot', ((dx >= 0 ? 1 : -1) * (3 + Math.random() * 5)).toFixed(1) + 'deg');
+    blurt.classList.remove('slam');
+    blurt.classList.add('swat');
+    lines.forEach(l => l.classList.remove('on'));
+    state = 'calm';
+    heat = Math.min(6, heat + 1);
+    idleLimit = Math.max(650, idleLimit * 0.7);   // it comes back sooner
+  }
+
+  function endured() {
+    state = 'calm';
+    lines.forEach(l => l.classList.remove('on'));
+    heat = Math.max(0, heat - 2.5);
+    idleLimit = Math.min(60000, idleLimit * 1.7 + 2500);   // and then it leaves you alone
+    lastInput = performance.now();
+  }
+
+  function input(now, dx, dy) {
+    lastInput = now;
+    flinch(now, dx || 0, dy || 0);
+  }
+
+  addEventListener('pointermove', e => {
+    const now = performance.now();
+    if (lastXY) {
+      const dx = e.clientX - lastXY[0], dy = e.clientY - lastXY[1];
+      if (state === 'showing') {
+        travelled += Math.hypot(dx, dy);
+        if (travelled > 14) input(now, dx, dy); else if (now - shownAt < GRACE) travelled = 0;
+      } else if (Math.hypot(dx, dy) > 0.5) lastInput = now;
+    }
+    lastXY = [e.clientX, e.clientY];
   });
+  addEventListener('pointerdown', e => {
+    lastXY = [e.clientX, e.clientY];
+    input(performance.now(), e.clientX - innerWidth / 2, e.clientY - innerHeight / 2);
+  });
+  addEventListener('keydown', e => {
+    if (e.key === 'Tab' || e.metaKey || e.ctrlKey || e.altKey) return;
+    input(performance.now(), 0, 0);
+  });
+  addEventListener('wheel', e => input(performance.now(), -e.deltaX, -e.deltaY), { passive: true });
+  addEventListener('resize', fit);
+  document.addEventListener('visibilitychange', () => { lastInput = last = performance.now(); if (state === 'showing') shownAt = Math.max(shownAt, last - T_L3); });
 
-  // what goes wrong next, once everything has been put right
-  let stage = 0, levelFor = 0, wait = 1.3, lastThing = pic;
-  function disturb() {
-    const sign = Math.random() < 0.5 ? -1 : 1;
-    if (stage === 0) { animate(shelf, 1.5, 0.9, 'swing'); lastThing = shelf; }          // a bracket gives
-    else if (stage === 1) { animate(paper, -0.9, 5, 'ease'); lastThing = paper; }       // was the paper always like that
-    else if (stage === 2) { animate(room, 0.65, 7, 'ease'); lastThing = room; }         // or is it the house
-    else if (stage === 3) { pic.rest = pic.a - 0.55; animate(pic, pic.rest, 1.5, 'swing'); lastThing = pic; } // a door, somewhere
-    else {
-      const pool = things.filter((t) => t !== lastThing);
-      const t = pool[Math.floor(Math.random() * pool.length)];
-      const by = sign * (0.42 + Math.random() * 0.4);
-      if (t === pic) { pic.rest = pic.a + by; animate(pic, pic.rest, 1.5, 'swing'); }
-      else if (t === shelf) animate(shelf, shelf.a + by, 0.9, 'swing');
-      else animate(t, t.a + by, 4 + Math.random() * 4, 'ease');
-      lastThing = t;
-    }
-    stage++;
-    wait = stage < 4 ? 1.6 : 1.5 + Math.random() * 5;
-  }
-
-  // marble: position along the shelf in units, 0 at the left lip
-  const M = { x: 27, v: 0, lo: 1, hi: 52 - 4.4 - 1, roll: 0 };
-  function stepMarble(dt) {
-    const tilt = abs(shelf) * Math.PI / 180;
-    let acc = 520 * Math.sin(tilt);
-    const grip = 520 * Math.sin(0.11 * Math.PI / 180);   // below this it will not start rolling
-    if (Math.abs(M.v) < 0.05 && Math.abs(acc) < grip) { M.v = 0; return; }
-    acc -= Math.sign(M.v || acc) * grip * 0.6;
-    M.v += acc * dt; M.v *= Math.exp(-0.5 * dt);
-    let x = M.x + M.v * dt;
-    if (x < M.lo) { x = M.lo; M.v = Math.abs(M.v) > 3 ? -M.v * 0.28 : 0; }
-    if (x > M.hi) { x = M.hi; M.v = Math.abs(M.v) > 3 ? -M.v * 0.28 : 0; }
-    M.roll += (x - M.x) / 2.2;
-    M.x = x;
-    marble.style.transform = `translateX(calc(var(--u) * ${x.toFixed(3)}))`;
-    swirl.style.transform = `rotate(${M.roll.toFixed(3)}rad)`;
-  }
-  marble.style.transform = `translateX(calc(var(--u) * ${M.x}))`;
-
-  let prev = performance.now();
   function frame(now) {
-    const dt = Math.min(0.05, (now - prev) / 1000); prev = now;
-    let busy = false;
-    for (const t of things) {
-      if (t.held) busy = true;
-      const an = t.anim;
-      if (an) {
-        busy = true;
-        an.t += dt;
-        const k = Math.min(1, an.t / an.dur);
-        if (an.kind === 'swing') {
-          const s = an.t;
-          t.a = an.to + (an.from - an.to) * Math.exp(-3.6 * s) * Math.cos(10 * s);
-        } else {
-          const e = k * k * (3 - 2 * k);
-          t.a = an.from + (an.to - an.from) * e;
-        }
-        if (k >= 1) { t.a = an.to; t.anim = null; }
-      }
-      if (t.a !== t.shown) { t.el.style.transform = `rotate(${t.a.toFixed(3)}deg)`; t.shown = t.a; }
+    const dt = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    let target;
+
+    if (state === 'calm') {
+      heat = Math.max(0, heat - dt * 0.05);
+      target = Math.min(0.8, heat * 0.14);
+      if (now - lastInput >= idleLimit) arrive(now);
     }
-    stepMarble(dt);
-    const level = things.every((t) => Math.abs(abs(t)) < TOL);
-    if (!busy && level) { levelFor += dt; if (levelFor > wait) { levelFor = 0; disturb(); } }
-    else levelFor = 0;
+    if (state === 'showing') {
+      const t = now - shownAt;
+      if (t > T_L1) lines[0].classList.add('on');
+      if (t > T_L2) lines[1].classList.add('on');
+      if (t > T_L3) lines[2].classList.add('on');
+      const k = Math.min(1, Math.max(0, (t - T_FADE) / (T_GONE - T_FADE)));
+      if (t > T_FADE) {
+        blurt.classList.remove('slam');
+        blurt.style.opacity = (1 - k) * (1 - k);
+        if (!calmMotion) blurt.style.transform = 'scale(' + (1 - 0.03 * k).toFixed(4) + ')';
+      }
+      target = 1 - 0.9 * k;
+      if (k >= 1 && !zeroed) {
+        zeroed = true;
+        lines[2].textContent = 'people thinking about it right now: 0';
+      }
+      if (t > T_DONE) endured();
+    }
+
+    flush += (target - flush) * Math.min(1, dt * (target > flush ? 2.2 : 0.7));
+    const c = COLD.map((v, i) => Math.round(v + (HOT[i] - v) * flush * 0.85));
+    document.body.style.backgroundColor = 'rgb(' + c.join(',') + ')';
+    root.style.setProperty('--flush', flush.toFixed(3));
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

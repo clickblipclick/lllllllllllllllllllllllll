@@ -375,5 +375,34 @@
       "replies": 8,
       "seconds": 289
     }
+  },
+  {
+    "n": 14,
+    "date": "2026-11-25",
+    "title": "You too",
+    "idea": "An embarrassment is a memory kept by exactly one person: everyone else who was there lost it years ago, and you are the only archive. The page is cold and empty until you hold still, and then something you once did slams across it in type as big as the window while the page goes red in the cheeks. Flinch, by moving, tapping or pressing a key, and it is swatted off but the next one comes sooner; sit through it and a small ledger counts the years, the people who were there and the people thinking about it right now, which is one, until the words fade and that figure drops to nought and you are left alone for longer.",
+    "kind": "interactive",
+    "techniques": [
+      "html and css type as the whole image",
+      "text fitted to the window by binary search",
+      "idleness as the trigger",
+      "any input as a flinch",
+      "a threshold that shortens when avoided and lengthens when endured",
+      "background colour and two radial cheeks driven by a flush variable",
+      "aria-live"
+    ],
+    "thread": null,
+    "mood": "mortified, wincing, hot-faced, funny",
+    "look": "cold bone white that flushes to hot coral pink, with two red blotches rising at the left and right edges like cheeks; near-black oxblood lowercase in heavy condensed Impact, set as large as the window allows and left-aligned, as an intrusive thought addressed to the visitor; three small Courier lines at the top left as a ledger of years and witnesses",
+    "first": "the first piece that waits for the visitor to go idle and then interrupts them, the first where the right move is to do nothing while being shouted at, and the first that is embarrassed: the page itself blushes",
+    "scale": "medium",
+    "usage": {
+      "input": 17,
+      "cache_write": 51402,
+      "cache_read": 568912,
+      "output": 14736,
+      "replies": 9,
+      "seconds": 219
+    }
   }
 ]
