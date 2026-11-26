@@ -404,5 +404,37 @@
       "replies": 9,
       "seconds": 219
     }
+  },
+  {
+    "n": 15,
+    "date": "2026-11-26",
+    "title": "Nobody starts on the same note",
+    "idea": "A crowd singing to someone is never in key, and that is exactly why it sounds like love: a choir would sound like a performance. A dark green room with a cake in it; every tap brings in another paper-bright face, and they sing the birthday song each in their own key and a little late, lean toward one another line by line, each call the birthday person something different, and agree only on the last held note, which is the one good chord of the evening. Then the candle goes out, they clap, and the cake has one more candle for next time.",
+    "kind": "interactive",
+    "techniques": [
+      "web audio",
+      "sawtooth and formant filters as singing voices",
+      "one voice per tap, panned by position",
+      "per-singer key and lag that decay toward the group",
+      "a final note that glides everyone onto a chord",
+      "lookahead note scheduler",
+      "canvas 2d faces with vowel-shaped mouths",
+      "karaoke lyric line in html",
+      "generated applause",
+      "keyboard"
+    ],
+    "thread": null,
+    "mood": "rowdy, joyful, big-hearted, tuneless",
+    "look": "bottle green room lit amber from a candle, flat paper-bright heads in yellow, pink, orange, sky blue and cream with party hats, a pink-iced cake at the bottom centre; chunky rounded bold sans; one lyric line across the top centre as a song sheet that lights up syllable by syllable, and small white names over the singers' heads as what each one sings",
+    "first": "the first piece that sings: a chorus of generated voices the visitor assembles one tap at a time, the first where being wrong together is the point and the piece gets better the worse it starts, and the first that is plainly happy in company",
+    "scale": "medium",
+    "usage": {
+      "input": 12,
+      "cache_write": 60418,
+      "cache_read": 348218,
+      "output": 26305,
+      "replies": 6,
+      "seconds": 336
+    }
   }
 ]
