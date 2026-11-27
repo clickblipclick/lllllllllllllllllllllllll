@@ -436,5 +436,40 @@
       "replies": 6,
       "seconds": 336
     }
+  },
+  {
+    "n": 16,
+    "date": "2026-11-27",
+    "title": "Please use the paths provided",
+    "idea": "A planner's path is a proposal and the worn line across the grass is the vote, and the vote always wins; the only question is how much the office spends before it calls the result its own idea. A college quadrangle seen from above in daylight, laid out square to an approved plan, with a crowd crossing it between six doors by whatever line is actually shortest. You are the Estates Office: you can pave, fence, put up KEEP OFF THE GRASS notices, returf and remove, and a ledger and a file of increasingly strained memoranda record what it cost and what percentage of journeys it changed. Rails go missing at the width of one person, notices end up face down in the strip they referred to, rain widens the mud, a dog belongs to everyone, at lunchtime people sit on the lawn without being told, and one night it snows and by nine the whole true plan is drawn in white. Pave the worn lines and the office thanks everyone for their cooperation, and then they cut the new corner.",
+    "kind": "interactive",
+    "techniques": [
+      "canvas 2d",
+      "crowd of autonomous walkers",
+      "fast marching travel-time fields, one per door and temperament",
+      "wear that lowers the cost of the ground it is on",
+      "per-pixel ground painted from a cell grid",
+      "tools: pave, fence, notice, returf, remove",
+      "fences that break where they are climbed",
+      "day, night, rain and snow on a weekly calendar",
+      "event-triggered memoranda with figures from the simulation",
+      "html ledger",
+      "localStorage estate that persists",
+      "generated bell",
+      "pointer drag and keyboard cursor"
+    ],
+    "thread": null,
+    "mood": "wry, sunny, civic, the pleasure of being overruled",
+    "look": "straw-lime mown lawn with pale grey flagstones, sand-coloured new paving, bare umber earth, terracotta roofs and a teal pond, seen in plan with soft shadows; roman Times in black on cream office paper with red memo numbers; the text sits in a side panel (a bottom sheet on a phone) as the institution's paperwork, a dotted ledger and numbered memoranda in the third person, with building names lettered on the roofs",
+    "first": "the first piece that is a simulation of a crowd: dozens of independent walkers whose accumulated choices make the drawing, the first where the visitor is given tools and authority and the piece is about that authority being politely ignored, and the first with weather and a calendar of its own",
+    "scale": "huge",
+    "usage": {
+      "input": 45,
+      "cache_write": 157664,
+      "cache_read": 3094815,
+      "output": 100134,
+      "replies": 24,
+      "seconds": 1332
+    }
   }
 ]

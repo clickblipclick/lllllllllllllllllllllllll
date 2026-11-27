@@ -4,15 +4,63 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' blob: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src data: blob:; media-src blob:; worker-src blob:; connect-src data: blob:; base-uri 'none'; form-action 'none'">
-<title>Nobody starts on the same note</title>
+<title>Please use the paths provided</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<canvas id="room" role="img" aria-label="A dark green room with a birthday cake. Each tap brings in a singer; they sing out of key with one another and agree only on the last note."></canvas>
-<p id="sheet" aria-hidden="true"></p>
-<p id="hint" aria-live="polite">tap anywhere to bring someone in</p>
-<prev-iteration n="15"></prev-iteration>
+<main id="estate">
+  <div id="ground">
+    <canvas id="quad" tabindex="0" aria-label="A college quadrangle seen from above. People cross it between six buildings. With a tool chosen, drag on the lawn to build; arrow keys move a cursor and space applies the tool."></canvas>
+  </div>
+  <aside id="office" aria-label="Estates Office">
+    <header id="head">
+      <h1>Estates Office</h1>
+      <p id="clock">Monday, week 1</p>
+      <div id="knobs">
+        <button id="pace" type="button" aria-label="Speed of the office clock">clock &times;1</button>
+        <button id="bell" type="button" aria-pressed="true">bell on</button>
+        <button id="fold" type="button" aria-expanded="false">the file</button>
+      </div>
+    </header>
+    <div id="tools" role="toolbar" aria-label="Works the Office can order">
+      <button type="button" data-tool="pave" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3zM3 12h18M9 6v6M15 12v6"/></svg><span>Pave</span>
+      </button>
+      <button type="button" data-tool="fence" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5v15M12 5v15M19 5v15M2 9h20M2 15h20"/></svg><span>Fence</span>
+      </button>
+      <button type="button" data-tool="sign" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v9H4zM12 13v8M8 8h8"/></svg><span>Notice</span>
+      </button>
+      <button type="button" data-tool="turf" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19h18M6 19v-6M10 19V9M14 19v-8M18 19v-5"/></svg><span>Returf</span>
+      </button>
+      <button type="button" data-tool="lift" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg><span>Remove</span>
+      </button>
+    </div>
+    <dl id="ledger">
+      <div><dt>Journeys recorded</dt><dd id="l-j">0</dd></div>
+      <div class="key"><dt>made on the paths provided</dt><dd id="l-p">&ndash;</dd></div>
+      <div><dt>Paving, as approved</dt><dd id="l-a">0 m&sup2;</dd></div>
+      <div><dt>Paving, supplementary</dt><dd id="l-s">0 m&sup2;</dd></div>
+      <div><dt>Lawn lost</dt><dd id="l-l">0 m&sup2;</dd></div>
+      <div><dt>Fence, and gaps in it</dt><dd id="l-f">0 m, 0</dd></div>
+      <div><dt>Notices standing</dt><dd id="l-n">0 of 0</dd></div>
+      <div><dt>Spent</dt><dd id="l-m">&pound;0</dd></div>
+    </dl>
+    <section id="file">
+      <h2>Memoranda</h2>
+      <ol id="memos" aria-live="polite"></ol>
+    </section>
+    <footer id="foot">
+      <button id="reset" type="button">Reinstate the approved plan</button>
+    </footer>
+  </aside>
+</main>
+
+<prev-iteration n="16"></prev-iteration>
 <script src="/shared/prev.js"></script>
 <script src="script.js"></script>
 </body>
