@@ -471,5 +471,31 @@
       "replies": 24,
       "seconds": 1332
     }
+  },
+  {
+    "n": 17,
+    "date": "2026-11-28",
+    "title": "You look fine",
+    "idea": "A green dot the size of a lentil is enough to make you sit up straighter and check your face: we have been trained by one small light to feel looked at. The page is black and empty, and a moment after you arrive a single green point comes on at the top centre, exactly where a camera's light lives. It is only a dot of colour and nothing is recording, which does not help.",
+    "kind": "still",
+    "techniques": [
+      "one css dot with a radial gradient and glow",
+      "a delay before it comes on",
+      "page visibility switches it off and on",
+      "safe-area inset"
+    ],
+    "thread": null,
+    "mood": "paranoid, self-conscious, watched",
+    "look": "pure black, one five-pixel LED-green point of light at the very top centre; no text on the page and no typeface",
+    "first": "the first piece that imitates the device's own hardware rather than showing content, and the first that turns the looking around: the visitor is the one being watched",
+    "scale": "tiny",
+    "usage": {
+      "input": 8,
+      "cache_write": 36924,
+      "cache_read": 206464,
+      "output": 5721,
+      "replies": 4,
+      "seconds": 75
+    }
   }
 ]
